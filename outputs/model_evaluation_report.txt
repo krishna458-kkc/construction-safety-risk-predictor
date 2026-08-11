@@ -1,0 +1,62 @@
+CONSTRUCTION SAFETY RISK PREDICTOR - MODEL EVALUATION REPORT
+======================================================================
+
+Training rows: 400   Validation rows: 100
+Validation class distribution:
+risk_level
+MEDIUM      44
+HIGH        26
+LOW         20
+CRITICAL    10
+
+----------------------------------------------------------------------
+MODEL: logistic_regression
+Accuracy: 0.650
+Recall by class: LOW=0.750, MEDIUM=0.636, HIGH=0.615, CRITICAL=0.600
+Selection metric (avg recall HIGH+CRITICAL): 0.608
+
+              precision    recall  f1-score   support
+
+         LOW       0.62      0.75      0.68        20
+      MEDIUM       0.74      0.64      0.68        44
+        HIGH       0.59      0.62      0.60        26
+    CRITICAL       0.55      0.60      0.57        10
+
+    accuracy                           0.65       100
+   macro avg       0.62      0.65      0.63       100
+weighted avg       0.66      0.65      0.65       100
+
+Confusion matrix (rows=actual, cols=predicted, order=['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']):
+[[15  5  0  0]
+ [ 9 28  7  0]
+ [ 0  5 16  5]
+ [ 0  0  4  6]]
+
+----------------------------------------------------------------------
+MODEL: random_forest
+Accuracy: 0.640
+Recall by class: LOW=0.800, MEDIUM=0.659, HIGH=0.577, CRITICAL=0.400
+Selection metric (avg recall HIGH+CRITICAL): 0.488
+
+              precision    recall  f1-score   support
+
+         LOW       0.70      0.80      0.74        20
+      MEDIUM       0.66      0.66      0.66        44
+        HIGH       0.56      0.58      0.57        26
+    CRITICAL       0.67      0.40      0.50        10
+
+    accuracy                           0.64       100
+   macro avg       0.64      0.61      0.62       100
+weighted avg       0.64      0.64      0.64       100
+
+Confusion matrix (rows=actual, cols=predicted, order=['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']):
+[[16  4  0  0]
+ [ 7 29  8  0]
+ [ 0  9 15  2]
+ [ 0  2  4  4]]
+
+======================================================================
+WINNER: logistic_regression
+Reason: highest avg recall on HIGH+CRITICAL (0.608 vs 0.488)
+Logistic Regression won: predictor.py should explain predictions using classifier.coef_ for the predicted class, multiplied by this input's encoded feature values (architecture-plan.md Section 5's original plan).
+Saved to: C:\Users\aadit\Desktop\project\models\risk_model.joblib

@@ -1,0 +1,501 @@
+incident_id,date,time,activity_type,location_type,description,severity,risk_score,risk_level,weather,shift,ppe_compliance_pct,previous_incidents_30d,crew_size
+INC-0042,2024-01-03,18:48,Electrical Work,Electrical Room,Damaged electrical cable observed.,Moderate,62.8,HIGH,Adverse,Day,74,0,5
+INC-0076,2024-01-06,07:06,Electrical Work,Electrical Room,Damaged electrical cable observed.,Near Miss,43.4,MEDIUM,Rain,Day,88,0,6
+INC-0480,2024-01-06,06:52,Working at Height,Roof,Fall arrest harness not properly anchored.,Near Miss,36.8,MEDIUM,Rain,Day,93,1,6
+INC-0210,2024-01-08,09:02,Electrical Work,Electrical Room,Live electrical panel left unlocked and unattended.,Near Miss,44.7,MEDIUM,Clear,Day,75,0,8
+INC-0419,2024-01-08,16:13,Working at Height,Roof,Fall arrest harness not properly anchored.,Minor,74.1,CRITICAL,Rain,Day,65,0,8
+INC-0068,2024-01-10,17:20,Electrical Work,Building Site,Improper lockout/tagout procedure observed.,Minor,20.9,LOW,Clear,Day,100,0,7
+INC-0082,2024-01-10,17:52,Lifting,Loading Area,Improper lifting zone setup observed.,Near Miss,31.0,MEDIUM,Clear,Day,87,0,1
+INC-0385,2024-01-11,21:54,Lifting,Loading Area,Improper lifting zone setup observed.,Moderate,35.2,MEDIUM,Clear,Night,75,0,11
+INC-0106,2024-01-13,18:36,Confined Space,Excavation Area,Ventilation equipment not in place for confined space entry.,Moderate,44.3,MEDIUM,Rain,Day,97,0,4
+INC-0173,2024-01-15,07:38,Confined Space,Electrical Room,No standby attendant present during confined space work.,Moderate,41.1,MEDIUM,Clear,Day,73,0,1
+INC-0254,2024-01-17,07:44,Confined Space,Electrical Room,Emergency retrieval system not set up before entry.,Moderate,49.0,HIGH,Clear,Day,88,0,9
+INC-0493,2024-01-17,16:04,Working at Height,Building Site,Worker observed near roof edge without guardrail.,Minor,37.8,MEDIUM,Clear,Day,79,0,8
+INC-0420,2024-01-18,15:04,Material Handling,Loading Area,Obstructed walkway due to stored materials.,Moderate,32.7,MEDIUM,Rain,Day,85,0,2
+INC-0226,2024-01-20,08:51,Vehicle Movement,Loading Area,Vehicle reversing without a spotter present.,Near Miss,47.1,MEDIUM,Rain,Day,81,1,2
+INC-0142,2024-01-20,20:58,Lifting,Loading Area,Improper lifting zone setup observed.,Minor,68.2,CRITICAL,Clear,Night,66,2,10
+INC-0137,2024-01-20,21:57,Scaffolding,Scaffolding Area,Missing guardrail on scaffold platform.,Major,42.3,MEDIUM,Rain,Night,76,0,7
+INC-0063,2024-01-21,10:06,Working at Height,Scaffolding Area,Unprotected edge observed during elevated work.,Near Miss,53.2,HIGH,Clear,Day,70,2,8
+INC-0228,2024-01-22,17:00,Scaffolding,Scaffolding Area,"Scaffold base observed on uneven, unstable ground.",Near Miss,44.9,MEDIUM,Windy,Day,59,0,7
+INC-0315,2024-01-22,15:00,Vehicle Movement,Loading Area,Pedestrian and vehicle routes not segregated.,Minor,59.5,HIGH,Windy,Day,100,3,2
+INC-0101,2024-01-22,15:44,Working at Height,Building Site,Worker observed near roof edge without guardrail.,Moderate,40.2,MEDIUM,Windy,Day,83,0,7
+INC-0279,2024-01-22,12:16,Welding,Building Site,Inadequate ventilation observed during welding task.,Minor,35.2,MEDIUM,Rain,Day,72,0,8
+INC-0381,2024-01-22,10:40,Electrical Work,Building Site,Exposed wiring near a wet work area.,Near Miss,24.1,LOW,Clear,Day,93,0,9
+INC-0072,2024-01-23,18:27,Excavation,Road/Access Area,Excavation walls showing signs of instability.,Near Miss,32.8,MEDIUM,Clear,Day,94,2,3
+INC-0307,2024-01-26,22:15,Confined Space,Electrical Room,Emergency retrieval system not set up before entry.,Moderate,99.7,CRITICAL,Adverse,Night,49,3,10
+INC-0367,2024-01-26,15:53,Scaffolding,Building Site,"Scaffold base observed on uneven, unstable ground.",Minor,31.8,MEDIUM,Clear,Day,79,0,3
+INC-0328,2024-01-26,12:35,Lifting,Loading Area,Load exceeded rated capacity of lifting equipment.,Near Miss,57.8,HIGH,Windy,Day,79,3,2
+INC-0064,2024-01-27,20:51,Housekeeping,Building Site,Debris accumulation observed in walkway.,Minor,40.7,MEDIUM,Rain,Night,67,1,8
+INC-0470,2024-01-27,13:12,Electrical Work,Building Site,Damaged electrical cable observed.,Moderate,55.7,HIGH,Clear,Day,64,1,7
+INC-0460,2024-01-29,08:10,Lifting,Loading Area,Rigging inspection not completed before lift.,Moderate,54.0,HIGH,Clear,Day,62,0,6
+INC-0113,2024-01-29,20:47,Lifting,Loading Area,Improper lifting zone setup observed.,Minor,34.6,MEDIUM,Rain,Night,98,0,7
+INC-0432,2024-01-29,23:57,Electrical Work,Building Site,Improper lockout/tagout procedure observed.,Minor,40.4,MEDIUM,Clear,Night,70,0,5
+INC-0051,2024-01-31,12:10,Scaffolding,Scaffolding Area,Incomplete scaffold tagging system observed.,Near Miss,44.5,MEDIUM,Adverse,Day,89,0,9
+INC-0429,2024-02-02,10:03,Vehicle Movement,Loading Area,Vehicle observed exceeding site speed limit.,Minor,41.7,MEDIUM,Adverse,Day,100,0,15
+INC-0278,2024-02-03,09:14,Material Handling,Loading Area,Obstructed walkway due to stored materials.,Near Miss,60.5,HIGH,Clear,Day,76,3,10
+INC-0329,2024-02-04,19:05,Excavation,Excavation Area,Excavation walls showing signs of instability.,Near Miss,33.9,MEDIUM,Windy,Night,88,0,8
+INC-0026,2024-02-06,08:49,Scaffolding,Scaffolding Area,Incomplete scaffold tagging system observed.,Near Miss,64.4,HIGH,Clear,Day,63,1,14
+INC-0233,2024-02-06,06:05,Welding,Building Site,Welding conducted near flammable materials.,Moderate,40.5,MEDIUM,Clear,Day,98,0,9
+INC-0375,2024-02-12,22:05,Excavation,Road/Access Area,No safe access/egress ladder provided in trench.,Major,40.4,MEDIUM,Rain,Night,86,0,10
+INC-0316,2024-02-13,07:08,Working at Height,Building Site,Ladder used beyond recommended height without stabilization.,Major,71.3,CRITICAL,Windy,Day,60,0,6
+INC-0474,2024-02-14,13:18,Scaffolding,Scaffolding Area,Missing guardrail on scaffold platform.,Minor,36.5,MEDIUM,Clear,Day,81,0,3
+INC-0220,2024-02-17,14:56,Confined Space,Excavation Area,Emergency retrieval system not set up before entry.,Major,67.7,CRITICAL,Windy,Day,99,0,7
+INC-0399,2024-02-17,18:11,Lifting,Warehouse,Rigging inspection not completed before lift.,Near Miss,11.0,LOW,Clear,Day,89,0,8
+INC-0041,2024-02-19,09:14,Excavation,Road/Access Area,No safe access/egress ladder provided in trench.,Near Miss,48.6,HIGH,Adverse,Day,86,0,6
+INC-0450,2024-02-19,15:08,Housekeeping,Building Site,Obstruction observed blocking emergency access route.,Moderate,38.7,MEDIUM,Adverse,Day,77,0,5
+INC-0227,2024-02-21,07:11,Confined Space,Electrical Room,Ventilation equipment not in place for confined space entry.,Major,67.7,CRITICAL,Clear,Day,60,1,3
+INC-0202,2024-02-24,10:01,Vehicle Movement,Loading Area,Vehicle observed exceeding site speed limit.,Major,39.7,MEDIUM,Rain,Day,82,0,3
+INC-0274,2024-02-24,13:56,Housekeeping,Building Site,Spilled material not cleaned up promptly.,Near Miss,18.2,LOW,Rain,Day,82,0,3
+INC-0244,2024-02-25,18:52,Confined Space,Electrical Room,Emergency retrieval system not set up before entry.,Moderate,67.0,CRITICAL,Rain,Day,84,1,3
+INC-0284,2024-02-26,16:24,Housekeeping,Warehouse,Spilled material not cleaned up promptly.,Near Miss,12.2,LOW,Rain,Day,88,0,7
+INC-0058,2024-02-27,22:37,Electrical Work,Building Site,Improper lockout/tagout procedure observed.,Major,53.5,HIGH,Rain,Night,61,0,4
+INC-0393,2024-02-27,12:07,Welding,Warehouse,Fire watch not posted during hot work.,Moderate,75.2,CRITICAL,Rain,Day,54,3,7
+INC-0240,2024-02-28,19:04,Material Handling,Loading Area,Stacked materials observed in an unstable configuration.,Moderate,48.3,HIGH,Rain,Night,74,0,13
+INC-0146,2024-02-28,06:30,Lifting,Building Site,Rigging inspection not completed before lift.,Minor,29.6,MEDIUM,Clear,Day,91,2,3
+INC-0090,2024-03-01,10:45,Electrical Work,Electrical Room,Exposed wiring near a wet work area.,Near Miss,30.9,MEDIUM,Clear,Day,90,0,1
+INC-0027,2024-03-03,19:10,Excavation,Excavation Area,Excavation walls showing signs of instability.,Near Miss,33.3,MEDIUM,Clear,Night,86,0,5
+INC-0199,2024-03-04,20:08,Working at Height,Scaffolding Area,Unprotected edge observed during elevated work.,Minor,56.2,HIGH,Clear,Night,93,2,5
+INC-0047,2024-03-05,07:18,Scaffolding,Building Site,Scaffold access partially obstructed.,Near Miss,47.0,MEDIUM,Windy,Day,78,0,11
+INC-0093,2024-03-06,20:15,Vehicle Movement,Road/Access Area,Pedestrian and vehicle routes not segregated.,Near Miss,29.4,MEDIUM,Clear,Night,77,0,4
+INC-0487,2024-03-07,22:07,Welding,Building Site,Fire watch not posted during hot work.,Near Miss,45.1,MEDIUM,Clear,Night,56,0,6
+INC-0022,2024-03-08,23:18,Confined Space,Electrical Room,No standby attendant present during confined space work.,Minor,51.4,HIGH,Clear,Night,93,1,6
+INC-0225,2024-03-09,19:43,Confined Space,Excavation Area,Confined space entry without atmospheric testing.,Moderate,48.1,HIGH,Rain,Night,99,0,3
+INC-0376,2024-03-10,06:13,Electrical Work,Building Site,Improper lockout/tagout procedure observed.,Moderate,55.8,HIGH,Windy,Day,77,2,2
+INC-0415,2024-03-10,21:55,Lifting,Building Site,Rigging inspection not completed before lift.,Minor,44.8,MEDIUM,Rain,Night,81,1,9
+INC-0364,2024-03-11,17:21,Housekeeping,Building Site,Debris accumulation observed in walkway.,Moderate,50.6,HIGH,Adverse,Day,59,0,12
+INC-0425,2024-03-11,17:54,Housekeeping,Building Site,Tools left in walking path after task completion.,Near Miss,29.2,MEDIUM,Clear,Day,81,0,13
+INC-0004,2024-03-11,13:40,Housekeeping,Building Site,Debris accumulation observed in walkway.,Near Miss,31.6,MEDIUM,Windy,Day,67,0,9
+INC-0088,2024-03-12,06:20,Working at Height,Building Site,Ladder used beyond recommended height without stabilization.,Minor,42.4,MEDIUM,Windy,Day,93,0,6
+INC-0321,2024-03-13,09:21,Excavation,Excavation Area,Inadequate barricading around excavation area.,Minor,48.8,HIGH,Clear,Day,76,0,3
+INC-0387,2024-03-13,22:48,Electrical Work,Building Site,Exposed wiring near a wet work area.,Near Miss,49.8,HIGH,Clear,Night,40,0,6
+INC-0179,2024-03-14,13:40,Housekeeping,Building Site,Tools left in walking path after task completion.,Minor,0.8,LOW,Clear,Day,100,0,2
+INC-0118,2024-03-15,17:23,Confined Space,Excavation Area,Emergency retrieval system not set up before entry.,Minor,37.1,MEDIUM,Clear,Day,95,0,8
+INC-0034,2024-03-15,11:35,Housekeeping,Warehouse,Spilled material not cleaned up promptly.,Minor,5.8,LOW,Rain,Day,100,0,1
+INC-0390,2024-03-16,16:35,Lifting,Building Site,Improper lifting zone setup observed.,Near Miss,27.8,LOW,Windy,Day,100,0,7
+INC-0091,2024-03-16,21:05,Excavation,Road/Access Area,Excavation walls showing signs of instability.,Moderate,84.7,CRITICAL,Windy,Night,63,2,2
+INC-0464,2024-03-18,15:04,Welding,Building Site,Fire watch not posted during hot work.,Near Miss,9.5,LOW,Clear,Day,84,0,7
+INC-0080,2024-03-19,16:30,Vehicle Movement,Loading Area,Blind spot hazard noted at site access road.,Near Miss,29.3,MEDIUM,Rain,Day,83,0,6
+INC-0422,2024-03-22,06:50,Electrical Work,Electrical Room,Live electrical panel left unlocked and unattended.,Moderate,52.1,HIGH,Adverse,Day,100,1,3
+INC-0190,2024-03-22,07:43,Electrical Work,Building Site,Improper lockout/tagout procedure observed.,Major,77.1,CRITICAL,Adverse,Day,76,2,4
+INC-0236,2024-03-22,13:08,Excavation,Road/Access Area,Inadequate barricading around excavation area.,Minor,15.5,LOW,Clear,Day,97,0,1
+INC-0443,2024-03-23,18:59,Confined Space,Electrical Room,Emergency retrieval system not set up before entry.,Major,73.4,CRITICAL,Clear,Day,73,3,7
+INC-0143,2024-03-24,19:34,Vehicle Movement,Road/Access Area,Pedestrian and vehicle routes not segregated.,Near Miss,37.6,MEDIUM,Clear,Night,58,0,5
+INC-0052,2024-03-24,12:21,Confined Space,Excavation Area,Ventilation equipment not in place for confined space entry.,Minor,75.0,CRITICAL,Rain,Day,50,1,10
+INC-0070,2024-03-25,09:47,Housekeeping,Building Site,Obstruction observed blocking emergency access route.,Moderate,52.7,HIGH,Rain,Day,69,0,8
+INC-0359,2024-03-28,21:37,Excavation,Excavation Area,Excavation walls showing signs of instability.,Major,46.8,MEDIUM,Rain,Night,100,0,9
+INC-0398,2024-03-29,18:10,Housekeeping,Building Site,Debris accumulation observed in walkway.,Near Miss,24.4,LOW,Clear,Day,60,0,5
+INC-0292,2024-04-01,07:19,Confined Space,Excavation Area,Emergency retrieval system not set up before entry.,Minor,63.8,HIGH,Clear,Day,46,0,4
+INC-0183,2024-04-01,11:38,Excavation,Road/Access Area,Spoil pile placed too close to excavation edge.,Near Miss,47.7,MEDIUM,Rain,Day,75,0,4
+INC-0217,2024-04-02,20:15,Welding,Warehouse,Fire watch not posted during hot work.,Moderate,57.2,HIGH,Adverse,Night,68,0,6
+INC-0196,2024-04-05,13:56,Material Handling,Warehouse,Improper storage of materials near a walkway.,Near Miss,20.0,LOW,Clear,Day,71,1,8
+INC-0123,2024-04-05,08:19,Electrical Work,Electrical Room,Improper lockout/tagout procedure observed.,Major,57.3,HIGH,Rain,Day,64,0,4
+INC-0272,2024-04-05,12:46,Confined Space,Excavation Area,Ventilation equipment not in place for confined space entry.,Minor,39.4,MEDIUM,Clear,Day,87,0,7
+INC-0406,2024-04-07,21:50,Lifting,Loading Area,Exclusion zone around lift not maintained.,Moderate,41.1,MEDIUM,Clear,Night,75,0,7
+INC-0404,2024-04-08,22:25,Electrical Work,Building Site,Exposed wiring near a wet work area.,Minor,39.2,MEDIUM,Clear,Night,83,0,3
+INC-0055,2024-04-08,22:13,Vehicle Movement,Road/Access Area,Pedestrian and vehicle routes not segregated.,Near Miss,27.9,LOW,Clear,Night,83,0,4
+INC-0145,2024-04-09,19:40,Electrical Work,Electrical Room,Live electrical panel left unlocked and unattended.,Moderate,59.8,HIGH,Clear,Night,80,1,5
+INC-0071,2024-04-10,11:39,Material Handling,Loading Area,Stacked materials observed in an unstable configuration.,Near Miss,21.5,LOW,Clear,Day,98,0,4
+INC-0066,2024-04-12,11:43,Confined Space,Electrical Room,Emergency retrieval system not set up before entry.,Minor,53.1,HIGH,Clear,Day,75,0,5
+INC-0454,2024-04-13,23:29,Housekeeping,Building Site,Tools left in walking path after task completion.,Near Miss,13.7,LOW,Clear,Night,75,0,3
+INC-0310,2024-04-15,14:41,Housekeeping,Warehouse,Spilled material not cleaned up promptly.,Near Miss,0.7,LOW,Clear,Day,93,0,8
+INC-0246,2024-04-15,10:30,Vehicle Movement,Loading Area,Pedestrian and vehicle routes not segregated.,Major,41.7,MEDIUM,Rain,Day,100,0,6
+INC-0223,2024-04-17,10:23,Vehicle Movement,Loading Area,Vehicle reversing without a spotter present.,Minor,38.7,MEDIUM,Clear,Day,65,0,6
+INC-0089,2024-04-20,06:28,Working at Height,Scaffolding Area,Fall arrest harness not properly anchored.,Minor,46.6,MEDIUM,Clear,Day,79,1,3
+INC-0175,2024-04-25,20:04,Lifting,Loading Area,Load exceeded rated capacity of lifting equipment.,Near Miss,48.3,HIGH,Windy,Night,71,0,7
+INC-0129,2024-04-26,12:15,Housekeeping,Warehouse,Tools left in walking path after task completion.,Minor,22.9,LOW,Clear,Day,72,1,6
+INC-0250,2024-04-27,23:22,Scaffolding,Scaffolding Area,Incomplete scaffold tagging system observed.,Minor,35.9,MEDIUM,Clear,Night,77,0,3
+INC-0182,2024-04-28,14:25,Material Handling,Loading Area,Stacked materials observed in an unstable configuration.,Near Miss,4.4,LOW,Clear,Day,96,0,6
+INC-0361,2024-04-28,14:16,Confined Space,Electrical Room,Confined space entry without atmospheric testing.,Moderate,74.0,CRITICAL,Rain,Day,68,0,9
+INC-0178,2024-04-28,19:17,Welding,Building Site,Welding screen missing in shared work area.,Moderate,41.6,MEDIUM,Rain,Night,71,1,4
+INC-0117,2024-04-29,18:07,Material Handling,Warehouse,Stacked materials observed in an unstable configuration.,Moderate,35.2,MEDIUM,Adverse,Day,80,0,1
+INC-0191,2024-05-02,12:42,Lifting,Building Site,Exclusion zone around lift not maintained.,Minor,38.1,MEDIUM,Windy,Day,90,0,10
+INC-0075,2024-05-04,12:02,Electrical Work,Building Site,Live electrical panel left unlocked and unattended.,Major,49.0,HIGH,Clear,Day,45,0,3
+INC-0324,2024-05-04,10:57,Lifting,Loading Area,Improper lifting zone setup observed.,Moderate,38.2,MEDIUM,Clear,Day,69,0,1
+INC-0301,2024-05-05,15:37,Vehicle Movement,Loading Area,Pedestrian and vehicle routes not segregated.,Moderate,46.9,MEDIUM,Rain,Day,84,0,6
+INC-0339,2024-05-06,15:03,Confined Space,Excavation Area,Ventilation equipment not in place for confined space entry.,Moderate,46.6,MEDIUM,Rain,Day,75,0,7
+INC-0431,2024-05-07,23:45,Housekeeping,Warehouse,Obstruction observed blocking emergency access route.,Moderate,9.7,LOW,Clear,Night,80,0,2
+INC-0382,2024-05-08,12:16,Vehicle Movement,Loading Area,Vehicle observed exceeding site speed limit.,Minor,42.9,MEDIUM,Rain,Day,77,1,7
+INC-0069,2024-05-08,20:31,Electrical Work,Electrical Room,Live electrical panel left unlocked and unattended.,Moderate,46.7,MEDIUM,Windy,Night,66,0,5
+INC-0483,2024-05-09,20:26,Lifting,Warehouse,Load exceeded rated capacity of lifting equipment.,Minor,27.1,LOW,Clear,Night,91,0,2
+INC-0282,2024-05-13,17:13,Electrical Work,Electrical Room,Exposed wiring near a wet work area.,Minor,36.4,MEDIUM,Clear,Day,73,0,2
+INC-0358,2024-05-14,10:39,Scaffolding,Scaffolding Area,Scaffold access partially obstructed.,Near Miss,42.6,MEDIUM,Clear,Day,69,0,5
+INC-0239,2024-05-14,23:19,Excavation,Road/Access Area,Inadequate barricading around excavation area.,Minor,58.1,HIGH,Rain,Night,79,1,2
+INC-0168,2024-05-14,09:31,Excavation,Road/Access Area,Spoil pile placed too close to excavation edge.,Moderate,53.8,HIGH,Clear,Day,77,1,4
+INC-0269,2024-05-14,18:13,Working at Height,Building Site,Unprotected edge observed during elevated work.,Major,53.2,HIGH,Adverse,Day,72,0,13
+INC-0370,2024-05-15,13:56,Material Handling,Loading Area,Obstructed walkway due to stored materials.,Moderate,52.7,HIGH,Adverse,Day,100,1,1
+INC-0285,2024-05-16,07:16,Welding,Warehouse,Inadequate ventilation observed during welding task.,Near Miss,22.0,LOW,Windy,Day,100,0,6
+INC-0221,2024-05-18,13:02,Excavation,Excavation Area,Spoil pile placed too close to excavation edge.,Near Miss,48.4,HIGH,Clear,Day,75,0,7
+INC-0164,2024-05-18,21:24,Scaffolding,Scaffolding Area,Scaffold access partially obstructed.,Major,55.6,HIGH,Adverse,Night,74,0,5
+INC-0438,2024-05-20,09:00,Excavation,Road/Access Area,No safe access/egress ladder provided in trench.,Near Miss,40.3,MEDIUM,Clear,Day,85,1,6
+INC-0120,2024-05-21,07:49,Excavation,Road/Access Area,No safe access/egress ladder provided in trench.,Moderate,41.0,MEDIUM,Rain,Day,74,0,1
+INC-0469,2024-05-21,08:18,Lifting,Building Site,Load exceeded rated capacity of lifting equipment.,Minor,36.9,MEDIUM,Clear,Day,99,0,4
+INC-0177,2024-05-22,16:50,Housekeeping,Building Site,Tools left in walking path after task completion.,Near Miss,26.3,LOW,Clear,Day,59,0,3
+INC-0111,2024-05-27,21:06,Electrical Work,Building Site,Damaged electrical cable observed.,Minor,44.8,MEDIUM,Windy,Night,83,0,7
+INC-0215,2024-05-27,15:19,Vehicle Movement,Road/Access Area,Vehicle reversing without a spotter present.,Near Miss,22.5,LOW,Clear,Day,87,0,6
+INC-0451,2024-05-29,07:43,Lifting,Building Site,Exclusion zone around lift not maintained.,Near Miss,7.9,LOW,Clear,Day,92,0,3
+INC-0373,2024-05-31,19:59,Confined Space,Electrical Room,No standby attendant present during confined space work.,Near Miss,62.7,HIGH,Clear,Night,63,0,6
+INC-0413,2024-06-01,08:38,Working at Height,Roof,Worker observed near roof edge without guardrail.,Minor,51.2,HIGH,Windy,Day,70,0,6
+INC-0379,2024-06-01,14:46,Vehicle Movement,Road/Access Area,Vehicle reversing without a spotter present.,Moderate,32.9,MEDIUM,Rain,Day,89,0,6
+INC-0445,2024-06-01,15:17,Electrical Work,Building Site,Improper lockout/tagout procedure observed.,Near Miss,44.8,MEDIUM,Clear,Day,72,0,11
+INC-0016,2024-06-02,18:46,Excavation,Road/Access Area,Inadequate barricading around excavation area.,Major,69.0,CRITICAL,Adverse,Day,64,0,4
+INC-0230,2024-06-05,16:29,Welding,Warehouse,Welding conducted near flammable materials.,Moderate,40.3,MEDIUM,Windy,Day,82,0,7
+INC-0458,2024-06-05,13:26,Lifting,Warehouse,Exclusion zone around lift not maintained.,Moderate,55.8,HIGH,Adverse,Day,64,0,7
+INC-0119,2024-06-06,22:33,Lifting,Warehouse,Rigging inspection not completed before lift.,Minor,37.4,MEDIUM,Windy,Night,58,0,4
+INC-0008,2024-06-09,21:47,Housekeeping,Warehouse,Tools left in walking path after task completion.,Minor,31.8,MEDIUM,Clear,Night,63,0,7
+INC-0253,2024-06-09,07:38,Vehicle Movement,Road/Access Area,Blind spot hazard noted at site access road.,Minor,28.6,MEDIUM,Clear,Day,92,0,8
+INC-0448,2024-06-12,14:45,Lifting,Loading Area,Improper lifting zone setup observed.,Minor,49.2,HIGH,Rain,Day,79,0,10
+INC-0040,2024-06-13,21:06,Material Handling,Warehouse,Manual handling of heavy load without mechanical aid.,Moderate,36.7,MEDIUM,Clear,Night,61,0,3
+INC-0154,2024-06-14,13:45,Confined Space,Excavation Area,Ventilation equipment not in place for confined space entry.,Minor,53.0,HIGH,Adverse,Day,81,0,7
+INC-0059,2024-06-16,11:16,Excavation,Excavation Area,Excavation walls showing signs of instability.,Near Miss,52.9,HIGH,Clear,Day,77,2,7
+INC-0306,2024-06-21,15:32,Confined Space,Excavation Area,Ventilation equipment not in place for confined space entry.,Minor,56.0,HIGH,Clear,Day,74,1,6
+INC-0188,2024-06-21,17:16,Material Handling,Loading Area,Improper storage of materials near a walkway.,Minor,21.5,LOW,Clear,Day,80,0,4
+INC-0087,2024-06-22,11:24,Electrical Work,Electrical Room,Improper lockout/tagout procedure observed.,Moderate,69.3,CRITICAL,Windy,Day,100,1,6
+INC-0283,2024-06-23,12:39,Material Handling,Warehouse,Stacked materials observed in an unstable configuration.,Major,38.2,MEDIUM,Adverse,Day,79,0,4
+INC-0457,2024-06-24,22:06,Working at Height,Building Site,Worker observed near roof edge without guardrail.,Minor,67.6,CRITICAL,Rain,Night,47,0,4
+INC-0204,2024-06-25,20:28,Material Handling,Warehouse,Obstructed walkway due to stored materials.,Major,15.6,LOW,Clear,Night,78,0,9
+INC-0229,2024-06-25,20:35,Housekeeping,Building Site,Obstruction observed blocking emergency access route.,Near Miss,19.8,LOW,Windy,Night,90,0,9
+INC-0380,2024-06-27,13:28,Electrical Work,Building Site,Damaged electrical cable observed.,Minor,21.7,LOW,Clear,Day,100,0,4
+INC-0013,2024-06-28,08:35,Lifting,Building Site,Improper lifting zone setup observed.,Near Miss,45.5,MEDIUM,Rain,Day,82,0,10
+INC-0286,2024-06-28,11:01,Lifting,Building Site,Load exceeded rated capacity of lifting equipment.,Near Miss,38.9,MEDIUM,Clear,Day,71,0,8
+INC-0313,2024-06-29,16:54,Scaffolding,Scaffolding Area,Missing guardrail on scaffold platform.,Near Miss,50.6,HIGH,Clear,Day,61,0,4
+INC-0015,2024-06-29,20:01,Scaffolding,Scaffolding Area,Incomplete scaffold tagging system observed.,Minor,46.1,MEDIUM,Clear,Night,65,0,6
+INC-0334,2024-06-29,11:08,Lifting,Warehouse,Exclusion zone around lift not maintained.,Minor,15.3,LOW,Clear,Day,95,0,9
+INC-0187,2024-06-30,11:11,Welding,Warehouse,Welding screen missing in shared work area.,Near Miss,34.9,MEDIUM,Rain,Day,83,0,10
+INC-0442,2024-07-01,20:02,Confined Space,Excavation Area,Confined space entry without atmospheric testing.,Moderate,57.6,HIGH,Adverse,Night,86,0,5
+INC-0342,2024-07-02,09:19,Material Handling,Loading Area,Manual handling of heavy load without mechanical aid.,Minor,18.1,LOW,Clear,Day,87,0,6
+INC-0374,2024-07-02,14:56,Electrical Work,Electrical Room,Damaged electrical cable observed.,Minor,43.9,MEDIUM,Clear,Day,89,1,6
+INC-0397,2024-07-04,09:21,Confined Space,Excavation Area,Ventilation equipment not in place for confined space entry.,Moderate,51.2,HIGH,Clear,Day,76,0,13
+INC-0098,2024-07-05,06:45,Vehicle Movement,Loading Area,Blind spot hazard noted at site access road.,Minor,16.6,LOW,Clear,Day,87,0,3
+INC-0079,2024-07-07,14:43,Lifting,Building Site,Exclusion zone around lift not maintained.,Near Miss,23.6,LOW,Clear,Day,91,0,7
+INC-0427,2024-07-09,11:33,Lifting,Building Site,Load exceeded rated capacity of lifting equipment.,Near Miss,56.2,HIGH,Clear,Day,50,1,12
+INC-0331,2024-07-10,16:17,Material Handling,Warehouse,Manual handling of heavy load without mechanical aid.,Moderate,20.6,LOW,Windy,Day,85,0,10
+INC-0169,2024-07-10,19:59,Confined Space,Excavation Area,No standby attendant present during confined space work.,Moderate,81.8,CRITICAL,Adverse,Night,91,2,13
+INC-0496,2024-07-11,12:39,Scaffolding,Building Site,Incomplete scaffold tagging system observed.,Minor,48.7,HIGH,Clear,Day,64,0,8
+INC-0270,2024-07-12,09:44,Excavation,Road/Access Area,Excavation walls showing signs of instability.,Near Miss,53.1,HIGH,Windy,Day,65,0,7
+INC-0418,2024-07-13,13:34,Housekeeping,Building Site,Obstruction observed blocking emergency access route.,Near Miss,26.9,LOW,Clear,Day,70,0,3
+INC-0333,2024-07-13,13:40,Excavation,Excavation Area,Excavation walls showing signs of instability.,Minor,52.2,HIGH,Clear,Day,63,0,1
+INC-0446,2024-07-13,20:51,Confined Space,Electrical Room,Confined space entry without atmospheric testing.,Minor,51.5,HIGH,Clear,Night,55,0,6
+INC-0436,2024-07-14,11:45,Vehicle Movement,Loading Area,Vehicle reversing without a spotter present.,Near Miss,30.9,MEDIUM,Rain,Day,78,0,4
+INC-0127,2024-07-14,16:37,Electrical Work,Electrical Room,Improper lockout/tagout procedure observed.,Minor,36.3,MEDIUM,Clear,Day,100,1,2
+INC-0153,2024-07-15,20:23,Scaffolding,Building Site,Missing guardrail on scaffold platform.,Minor,63.3,HIGH,Rain,Night,62,1,4
+INC-0492,2024-07-15,15:09,Welding,Building Site,Welding conducted near flammable materials.,Minor,65.4,CRITICAL,Windy,Day,55,1,1
+INC-0010,2024-07-16,10:57,Housekeeping,Warehouse,Spilled material not cleaned up promptly.,Near Miss,13.9,LOW,Rain,Day,78,0,5
+INC-0078,2024-07-16,21:47,Housekeeping,Building Site,Obstruction observed blocking emergency access route.,Near Miss,27.1,LOW,Clear,Night,64,0,11
+INC-0149,2024-07-21,10:30,Lifting,Warehouse,Exclusion zone around lift not maintained.,Moderate,31.2,MEDIUM,Rain,Day,85,0,3
+INC-0019,2024-07-22,10:15,Vehicle Movement,Loading Area,Pedestrian and vehicle routes not segregated.,Moderate,48.0,HIGH,Adverse,Day,99,1,4
+INC-0135,2024-07-24,13:27,Working at Height,Roof,Unprotected edge observed during elevated work.,Near Miss,29.1,MEDIUM,Clear,Day,97,0,4
+INC-0439,2024-07-25,07:14,Welding,Warehouse,Inadequate ventilation observed during welding task.,Near Miss,28.5,MEDIUM,Clear,Day,65,0,3
+INC-0401,2024-07-25,12:45,Confined Space,Electrical Room,Ventilation equipment not in place for confined space entry.,Minor,59.7,HIGH,Clear,Day,82,0,9
+INC-0267,2024-07-26,12:52,Confined Space,Electrical Room,No standby attendant present during confined space work.,Major,49.0,HIGH,Clear,Day,79,0,3
+INC-0211,2024-07-28,10:05,Housekeeping,Warehouse,Debris accumulation observed in walkway.,Near Miss,1.9,LOW,Clear,Day,80,0,5
+INC-0355,2024-07-29,15:44,Scaffolding,Scaffolding Area,"Scaffold base observed on uneven, unstable ground.",Minor,75.1,CRITICAL,Adverse,Day,61,0,5
+INC-0005,2024-07-30,14:08,Housekeeping,Warehouse,Tools left in walking path after task completion.,Minor,33.5,MEDIUM,Adverse,Day,88,1,6
+INC-0317,2024-07-30,13:09,Material Handling,Warehouse,Improper storage of materials near a walkway.,Near Miss,37.8,MEDIUM,Clear,Day,67,0,7
+INC-0053,2024-07-30,22:12,Material Handling,Loading Area,Improper storage of materials near a walkway.,Near Miss,33.7,MEDIUM,Windy,Night,71,0,1
+INC-0362,2024-07-31,15:17,Confined Space,Excavation Area,Confined space entry without atmospheric testing.,Major,75.7,CRITICAL,Adverse,Day,90,1,2
+INC-0206,2024-07-31,20:11,Housekeeping,Warehouse,Tools left in walking path after task completion.,Major,23.7,LOW,Clear,Night,57,0,1
+INC-0130,2024-08-01,18:00,Material Handling,Loading Area,Improper storage of materials near a walkway.,Minor,28.6,MEDIUM,Windy,Day,88,0,10
+INC-0447,2024-08-04,11:45,Working at Height,Scaffolding Area,Fall arrest harness not properly anchored.,Near Miss,52.2,HIGH,Clear,Day,64,0,5
+INC-0264,2024-08-04,08:29,Housekeeping,Building Site,Spilled material not cleaned up promptly.,Near Miss,13.4,LOW,Clear,Day,95,0,10
+INC-0157,2024-08-06,22:56,Lifting,Warehouse,Improper lifting zone setup observed.,Minor,45.3,MEDIUM,Adverse,Night,100,1,8
+INC-0463,2024-08-10,20:52,Electrical Work,Electrical Room,Damaged electrical cable observed.,Near Miss,43.5,MEDIUM,Rain,Night,100,0,7
+INC-0025,2024-08-12,18:52,Scaffolding,Building Site,Missing guardrail on scaffold platform.,Moderate,53.9,HIGH,Clear,Day,64,1,12
+INC-0479,2024-08-13,08:35,Electrical Work,Electrical Room,Exposed wiring near a wet work area.,Moderate,41.0,MEDIUM,Rain,Day,86,0,3
+INC-0200,2024-08-13,11:01,Scaffolding,Scaffolding Area,"Scaffold base observed on uneven, unstable ground.",Near Miss,44.3,MEDIUM,Rain,Day,83,0,4
+INC-0412,2024-08-14,15:34,Working at Height,Building Site,Unprotected edge observed during elevated work.,Minor,39.1,MEDIUM,Clear,Day,85,0,7
+INC-0318,2024-08-15,20:06,Material Handling,Loading Area,Improper storage of materials near a walkway.,Near Miss,52.4,HIGH,Adverse,Night,69,0,8
+INC-0363,2024-08-15,08:12,Housekeeping,Warehouse,Tools left in walking path after task completion.,Near Miss,6.7,LOW,Clear,Day,90,0,7
+INC-0263,2024-08-16,19:27,Vehicle Movement,Loading Area,Vehicle reversing without a spotter present.,Moderate,47.0,MEDIUM,Rain,Night,89,1,12
+INC-0205,2024-08-18,23:58,Working at Height,Roof,Worker observed near roof edge without guardrail.,Moderate,53.3,HIGH,Clear,Night,82,0,4
+INC-0335,2024-08-19,12:27,Excavation,Excavation Area,No safe access/egress ladder provided in trench.,Major,52.1,HIGH,Adverse,Day,89,0,5
+INC-0467,2024-08-21,12:47,Housekeeping,Warehouse,Spilled material not cleaned up promptly.,Near Miss,18.0,LOW,Clear,Day,77,0,10
+INC-0350,2024-08-23,20:50,Vehicle Movement,Loading Area,Blind spot hazard noted at site access road.,Near Miss,27.7,LOW,Clear,Night,100,0,6
+INC-0345,2024-08-23,08:55,Confined Space,Electrical Room,Ventilation equipment not in place for confined space entry.,Moderate,26.0,LOW,Clear,Day,88,0,3
+INC-0394,2024-08-23,13:08,Lifting,Warehouse,Improper lifting zone setup observed.,Major,43.2,MEDIUM,Clear,Day,60,0,4
+INC-0018,2024-08-25,07:44,Welding,Building Site,Inadequate ventilation observed during welding task.,Moderate,22.1,LOW,Clear,Day,70,0,4
+INC-0115,2024-08-25,10:39,Housekeeping,Warehouse,Obstruction observed blocking emergency access route.,Near Miss,25.3,LOW,Clear,Day,65,0,6
+INC-0103,2024-08-27,10:40,Material Handling,Loading Area,Stacked materials observed in an unstable configuration.,Near Miss,33.0,MEDIUM,Windy,Day,79,0,4
+INC-0302,2024-08-31,14:55,Housekeeping,Warehouse,Debris accumulation observed in walkway.,Minor,29.5,MEDIUM,Clear,Day,79,2,6
+INC-0304,2024-08-31,07:43,Material Handling,Warehouse,Manual handling of heavy load without mechanical aid.,Near Miss,31.1,MEDIUM,Rain,Day,100,1,13
+INC-0265,2024-08-31,10:34,Material Handling,Loading Area,Obstructed walkway due to stored materials.,Minor,49.3,HIGH,Adverse,Day,60,0,8
+INC-0011,2024-09-01,11:54,Excavation,Road/Access Area,Spoil pile placed too close to excavation edge.,Near Miss,45.6,MEDIUM,Rain,Day,99,1,8
+INC-0405,2024-09-02,09:43,Housekeeping,Warehouse,Tools left in walking path after task completion.,Near Miss,9.1,LOW,Clear,Day,74,0,3
+INC-0465,2024-09-03,06:28,Confined Space,Electrical Room,No standby attendant present during confined space work.,Major,72.3,CRITICAL,Windy,Day,78,1,6
+INC-0201,2024-09-05,06:22,Welding,Warehouse,Inadequate ventilation observed during welding task.,Moderate,43.2,MEDIUM,Clear,Day,51,0,10
+INC-0141,2024-09-05,19:23,Excavation,Road/Access Area,Excavation walls showing signs of instability.,Minor,38.8,MEDIUM,Clear,Night,100,1,1
+INC-0441,2024-09-06,09:33,Excavation,Excavation Area,Spoil pile placed too close to excavation edge.,Minor,62.4,HIGH,Clear,Day,80,2,1
+INC-0006,2024-09-07,20:06,Vehicle Movement,Road/Access Area,Vehicle observed exceeding site speed limit.,Near Miss,25.5,LOW,Clear,Night,89,1,5
+INC-0128,2024-09-08,10:19,Excavation,Road/Access Area,Excavation walls showing signs of instability.,Moderate,63.1,HIGH,Windy,Day,56,0,10
+INC-0003,2024-09-11,22:40,Lifting,Warehouse,Load exceeded rated capacity of lifting equipment.,Near Miss,42.6,MEDIUM,Clear,Night,77,1,4
+INC-0163,2024-09-12,11:27,Welding,Building Site,Inadequate ventilation observed during welding task.,Near Miss,48.5,HIGH,Windy,Day,63,1,9
+INC-0437,2024-09-12,21:22,Excavation,Excavation Area,Spoil pile placed too close to excavation edge.,Moderate,45.9,MEDIUM,Adverse,Night,100,0,4
+INC-0352,2024-09-13,08:06,Scaffolding,Scaffolding Area,"Scaffold base observed on uneven, unstable ground.",Major,58.4,HIGH,Adverse,Day,81,0,2
+INC-0430,2024-09-15,20:01,Working at Height,Scaffolding Area,Ladder used beyond recommended height without stabilization.,Near Miss,79.6,CRITICAL,Adverse,Night,97,2,3
+INC-0198,2024-09-16,12:20,Welding,Warehouse,Inadequate ventilation observed during welding task.,Near Miss,39.4,MEDIUM,Clear,Day,68,0,3
+INC-0466,2024-09-17,21:58,Confined Space,Excavation Area,Confined space entry without atmospheric testing.,Moderate,55.9,HIGH,Rain,Night,74,0,6
+INC-0031,2024-09-17,10:22,Housekeeping,Building Site,Debris accumulation observed in walkway.,Near Miss,21.3,LOW,Clear,Day,82,0,4
+INC-0108,2024-09-18,22:38,Housekeeping,Building Site,Obstruction observed blocking emergency access route.,Near Miss,44.4,MEDIUM,Adverse,Night,61,1,6
+INC-0400,2024-09-18,19:21,Electrical Work,Electrical Room,Improper lockout/tagout procedure observed.,Minor,41.3,MEDIUM,Windy,Night,96,0,6
+INC-0476,2024-09-18,21:26,Vehicle Movement,Road/Access Area,Pedestrian and vehicle routes not segregated.,Moderate,32.3,MEDIUM,Clear,Night,85,0,3
+INC-0409,2024-09-20,13:53,Welding,Warehouse,Fire watch not posted during hot work.,Moderate,59.5,HIGH,Adverse,Day,59,1,3
+INC-0057,2024-09-20,10:30,Confined Space,Electrical Room,No standby attendant present during confined space work.,Moderate,41.1,MEDIUM,Clear,Day,90,0,7
+INC-0074,2024-09-23,13:46,Scaffolding,Scaffolding Area,Missing guardrail on scaffold platform.,Minor,38.1,MEDIUM,Clear,Day,64,0,5
+INC-0095,2024-09-24,23:26,Excavation,Excavation Area,Excavation walls showing signs of instability.,Moderate,52.8,HIGH,Clear,Night,81,1,5
+INC-0114,2024-09-24,13:52,Welding,Warehouse,Welding conducted near flammable materials.,Near Miss,42.3,MEDIUM,Adverse,Day,92,1,5
+INC-0395,2024-09-25,13:26,Housekeeping,Building Site,Spilled material not cleaned up promptly.,Near Miss,6.1,LOW,Clear,Day,98,0,6
+INC-0131,2024-09-27,13:47,Welding,Building Site,Welding conducted near flammable materials.,Near Miss,52.6,HIGH,Rain,Day,76,1,1
+INC-0261,2024-09-27,15:31,Lifting,Building Site,Exclusion zone around lift not maintained.,Minor,31.3,MEDIUM,Rain,Day,87,0,7
+INC-0303,2024-09-27,16:12,Confined Space,Excavation Area,Emergency retrieval system not set up before entry.,Minor,86.0,CRITICAL,Adverse,Day,77,1,2
+INC-0248,2024-09-28,16:57,Housekeeping,Building Site,Spilled material not cleaned up promptly.,Minor,42.4,MEDIUM,Adverse,Day,65,0,8
+INC-0391,2024-09-28,18:11,Scaffolding,Building Site,Missing guardrail on scaffold platform.,Near Miss,41.1,MEDIUM,Clear,Day,81,0,5
+INC-0126,2024-09-28,16:35,Working at Height,Roof,Fall arrest harness not properly anchored.,Minor,47.6,MEDIUM,Windy,Day,88,0,2
+INC-0478,2024-09-29,20:42,Scaffolding,Building Site,"Scaffold base observed on uneven, unstable ground.",Minor,32.0,MEDIUM,Clear,Night,90,0,9
+INC-0486,2024-10-02,15:29,Housekeeping,Warehouse,Tools left in walking path after task completion.,Minor,7.2,LOW,Clear,Day,90,0,2
+INC-0252,2024-10-04,12:20,Material Handling,Warehouse,Improper storage of materials near a walkway.,Minor,30.7,MEDIUM,Windy,Day,83,0,5
+INC-0408,2024-10-09,17:46,Electrical Work,Electrical Room,Live electrical panel left unlocked and unattended.,Major,57.6,HIGH,Windy,Day,90,1,6
+INC-0224,2024-10-11,20:03,Scaffolding,Scaffolding Area,Missing guardrail on scaffold platform.,Moderate,37.3,MEDIUM,Clear,Night,81,0,9
+INC-0125,2024-10-13,08:24,Working at Height,Roof,Worker observed near roof edge without guardrail.,Near Miss,63.0,HIGH,Rain,Day,99,1,9
+INC-0340,2024-10-15,14:55,Working at Height,Scaffolding Area,Fall arrest harness not properly anchored.,Major,56.6,HIGH,Adverse,Day,76,0,6
+INC-0212,2024-10-16,19:45,Welding,Building Site,Welding screen missing in shared work area.,Moderate,34.6,MEDIUM,Clear,Night,95,2,5
+INC-0097,2024-10-16,07:49,Excavation,Excavation Area,No safe access/egress ladder provided in trench.,Major,44.4,MEDIUM,Windy,Day,87,0,6
+INC-0268,2024-10-17,13:42,Lifting,Loading Area,Exclusion zone around lift not maintained.,Moderate,58.4,HIGH,Adverse,Day,76,1,4
+INC-0105,2024-10-22,13:36,Vehicle Movement,Road/Access Area,Blind spot hazard noted at site access road.,Moderate,24.2,LOW,Clear,Day,85,2,7
+INC-0388,2024-10-25,06:28,Confined Space,Electrical Room,Ventilation equipment not in place for confined space entry.,Moderate,68.9,CRITICAL,Clear,Day,73,1,5
+INC-0297,2024-10-26,16:39,Housekeeping,Building Site,Tools left in walking path after task completion.,Minor,29.9,MEDIUM,Clear,Day,70,1,8
+INC-0152,2024-10-26,11:28,Confined Space,Excavation Area,Ventilation equipment not in place for confined space entry.,Near Miss,43.5,MEDIUM,Clear,Day,82,0,5
+INC-0156,2024-10-27,15:13,Confined Space,Excavation Area,Emergency retrieval system not set up before entry.,Near Miss,32.8,MEDIUM,Clear,Day,89,0,6
+INC-0038,2024-10-28,22:28,Excavation,Excavation Area,Inadequate barricading around excavation area.,Moderate,52.2,HIGH,Clear,Night,64,0,10
+INC-0002,2024-10-29,09:37,Material Handling,Warehouse,Manual handling of heavy load without mechanical aid.,Minor,13.3,LOW,Windy,Day,96,0,3
+INC-0023,2024-10-29,22:08,Lifting,Building Site,Exclusion zone around lift not maintained.,Near Miss,59.2,HIGH,Rain,Night,77,2,5
+INC-0096,2024-10-29,23:01,Excavation,Excavation Area,Excavation walls showing signs of instability.,Near Miss,44.9,MEDIUM,Clear,Night,97,2,6
+INC-0271,2024-10-29,13:27,Vehicle Movement,Loading Area,Vehicle reversing without a spotter present.,Near Miss,40.1,MEDIUM,Clear,Day,75,0,4
+INC-0322,2024-10-30,13:52,Confined Space,Excavation Area,Emergency retrieval system not set up before entry.,Major,71.8,CRITICAL,Adverse,Day,70,0,2
+INC-0449,2024-10-31,16:14,Housekeeping,Warehouse,Obstruction observed blocking emergency access route.,Minor,7.5,LOW,Clear,Day,85,1,9
+INC-0007,2024-10-31,10:26,Electrical Work,Building Site,Damaged electrical cable observed.,Near Miss,42.6,MEDIUM,Clear,Day,74,0,7
+INC-0341,2024-11-02,11:00,Electrical Work,Building Site,Damaged electrical cable observed.,Minor,48.4,HIGH,Rain,Day,39,0,9
+INC-0083,2024-11-04,07:25,Vehicle Movement,Road/Access Area,Blind spot hazard noted at site access road.,Major,28.6,MEDIUM,Rain,Day,85,0,9
+INC-0216,2024-11-04,18:15,Confined Space,Electrical Room,Ventilation equipment not in place for confined space entry.,Major,58.0,HIGH,Clear,Day,79,0,12
+INC-0440,2024-11-05,20:17,Scaffolding,Scaffolding Area,Scaffold access partially obstructed.,Near Miss,44.2,MEDIUM,Clear,Night,88,0,11
+INC-0348,2024-11-05,13:40,Electrical Work,Building Site,Damaged electrical cable observed.,Moderate,58.2,HIGH,Clear,Day,80,0,9
+INC-0473,2024-11-06,06:38,Vehicle Movement,Loading Area,Vehicle reversing without a spotter present.,Moderate,53.9,HIGH,Windy,Day,68,0,5
+INC-0300,2024-11-07,11:16,Scaffolding,Scaffolding Area,Scaffold access partially obstructed.,Near Miss,51.7,HIGH,Clear,Day,75,1,1
+INC-0365,2024-11-07,06:44,Vehicle Movement,Loading Area,Blind spot hazard noted at site access road.,Near Miss,45.1,MEDIUM,Clear,Day,71,1,10
+INC-0243,2024-11-07,17:34,Welding,Warehouse,Welding screen missing in shared work area.,Minor,42.9,MEDIUM,Windy,Day,55,0,3
+INC-0219,2024-11-16,21:09,Working at Height,Building Site,Unprotected edge observed during elevated work.,Minor,47.7,MEDIUM,Clear,Night,83,0,6
+INC-0048,2024-11-16,09:25,Welding,Building Site,Welding screen missing in shared work area.,Near Miss,30.2,MEDIUM,Rain,Day,84,0,1
+INC-0426,2024-11-17,08:26,Housekeeping,Warehouse,Tools left in walking path after task completion.,Near Miss,8.1,LOW,Windy,Day,92,0,2
+INC-0468,2024-11-17,21:26,Electrical Work,Electrical Room,Live electrical panel left unlocked and unattended.,Near Miss,52.8,HIGH,Rain,Night,84,0,11
+INC-0434,2024-11-17,15:11,Electrical Work,Electrical Room,Exposed wiring near a wet work area.,Moderate,33.8,MEDIUM,Clear,Day,97,0,2
+INC-0499,2024-11-18,17:51,Material Handling,Loading Area,Obstructed walkway due to stored materials.,Near Miss,19.4,LOW,Rain,Day,100,0,8
+INC-0294,2024-11-18,20:19,Material Handling,Warehouse,Obstructed walkway due to stored materials.,Moderate,50.6,HIGH,Clear,Night,70,3,2
+INC-0147,2024-11-19,13:03,Housekeeping,Warehouse,Spilled material not cleaned up promptly.,Minor,24.1,LOW,Windy,Day,96,0,7
+INC-0245,2024-11-19,15:26,Material Handling,Loading Area,Stacked materials observed in an unstable configuration.,Near Miss,41.3,MEDIUM,Clear,Day,54,1,9
+INC-0477,2024-11-20,08:31,Lifting,Loading Area,Exclusion zone around lift not maintained.,Moderate,60.8,HIGH,Clear,Day,60,1,5
+INC-0020,2024-11-22,18:46,Working at Height,Scaffolding Area,Fall arrest harness not properly anchored.,Near Miss,29.3,MEDIUM,Clear,Day,100,0,4
+INC-0498,2024-11-23,10:50,Working at Height,Roof,Fall arrest harness not properly anchored.,Major,69.2,CRITICAL,Rain,Day,67,0,7
+INC-0189,2024-11-26,10:04,Welding,Building Site,Fire watch not posted during hot work.,Minor,44.6,MEDIUM,Clear,Day,77,1,7
+INC-0296,2024-11-26,21:03,Welding,Warehouse,Fire watch not posted during hot work.,Minor,63.3,HIGH,Rain,Night,46,0,11
+INC-0209,2024-11-26,14:59,Material Handling,Warehouse,Manual handling of heavy load without mechanical aid.,Minor,27.8,LOW,Clear,Day,80,1,4
+INC-0287,2024-11-28,11:58,Electrical Work,Building Site,Improper lockout/tagout procedure observed.,Near Miss,86.0,CRITICAL,Clear,Day,78,3,11
+INC-0035,2024-12-01,19:34,Electrical Work,Building Site,Improper lockout/tagout procedure observed.,Moderate,48.4,HIGH,Adverse,Night,80,0,3
+INC-0471,2024-12-02,17:11,Working at Height,Roof,Worker observed near roof edge without guardrail.,Near Miss,45.0,MEDIUM,Adverse,Day,91,0,2
+INC-0197,2024-12-03,19:41,Material Handling,Loading Area,Obstructed walkway due to stored materials.,Near Miss,26.1,LOW,Clear,Night,79,1,3
+INC-0384,2024-12-03,23:12,Vehicle Movement,Loading Area,Vehicle reversing without a spotter present.,Minor,42.6,MEDIUM,Clear,Night,66,0,5
+INC-0459,2024-12-05,21:11,Welding,Warehouse,Fire watch not posted during hot work.,Near Miss,43.5,MEDIUM,Clear,Night,77,1,1
+INC-0150,2024-12-07,15:16,Working at Height,Scaffolding Area,Fall arrest harness not properly anchored.,Moderate,42.7,MEDIUM,Clear,Day,53,0,9
+INC-0378,2024-12-09,18:34,Scaffolding,Scaffolding Area,Incomplete scaffold tagging system observed.,Moderate,33.9,MEDIUM,Clear,Day,86,0,6
+INC-0482,2024-12-09,16:30,Excavation,Road/Access Area,No safe access/egress ladder provided in trench.,Minor,83.1,CRITICAL,Adverse,Day,68,2,8
+INC-0176,2024-12-09,11:31,Working at Height,Scaffolding Area,Unprotected edge observed during elevated work.,Moderate,56.4,HIGH,Clear,Day,65,0,6
+INC-0107,2024-12-10,21:54,Excavation,Excavation Area,Excavation walls showing signs of instability.,Minor,56.7,HIGH,Windy,Night,65,0,8
+INC-0251,2024-12-10,12:41,Confined Space,Electrical Room,No standby attendant present during confined space work.,Moderate,59.8,HIGH,Windy,Day,84,2,3
+INC-0309,2024-12-10,16:16,Working at Height,Scaffolding Area,Fall arrest harness not properly anchored.,Moderate,52.3,HIGH,Clear,Day,67,0,9
+INC-0490,2024-12-10,10:03,Welding,Warehouse,Welding screen missing in shared work area.,Moderate,37.6,MEDIUM,Clear,Day,82,0,11
+INC-0039,2024-12-13,06:41,Lifting,Building Site,Rigging inspection not completed before lift.,Minor,22.0,LOW,Windy,Day,92,0,12
+INC-0276,2024-12-13,15:41,Welding,Warehouse,Welding conducted near flammable materials.,Near Miss,38.0,MEDIUM,Clear,Day,82,0,2
+INC-0326,2024-12-14,06:05,Housekeeping,Warehouse,Tools left in walking path after task completion.,Near Miss,23.6,LOW,Rain,Day,84,0,4
+INC-0312,2024-12-14,07:51,Working at Height,Building Site,Fall arrest harness not properly anchored.,Minor,22.0,LOW,Clear,Day,100,0,8
+INC-0185,2024-12-14,10:12,Excavation,Excavation Area,Excavation walls showing signs of instability.,Major,47.2,MEDIUM,Clear,Day,89,3,7
+INC-0249,2024-12-16,17:07,Electrical Work,Building Site,Exposed wiring near a wet work area.,Minor,52.0,HIGH,Clear,Day,88,2,4
+INC-0162,2024-12-16,08:24,Lifting,Building Site,Exclusion zone around lift not maintained.,Major,27.9,LOW,Clear,Day,73,0,1
+INC-0148,2024-12-19,21:38,Material Handling,Loading Area,Obstructed walkway due to stored materials.,Near Miss,23.2,LOW,Clear,Night,71,0,7
+INC-0049,2024-12-21,10:32,Electrical Work,Electrical Room,Improper lockout/tagout procedure observed.,Moderate,44.3,MEDIUM,Clear,Day,85,1,5
+INC-0112,2024-12-21,06:30,Confined Space,Electrical Room,Emergency retrieval system not set up before entry.,Major,44.4,MEDIUM,Clear,Day,71,0,8
+INC-0444,2024-12-22,14:49,Vehicle Movement,Road/Access Area,Vehicle reversing without a spotter present.,Near Miss,30.0,MEDIUM,Windy,Day,77,0,1
+INC-0481,2024-12-23,06:12,Electrical Work,Electrical Room,Damaged electrical cable observed.,Moderate,39.9,MEDIUM,Clear,Day,75,0,6
+INC-0491,2024-12-23,09:44,Scaffolding,Building Site,Incomplete scaffold tagging system observed.,Near Miss,41.0,MEDIUM,Windy,Day,91,0,4
+INC-0389,2024-12-25,17:52,Vehicle Movement,Loading Area,Pedestrian and vehicle routes not segregated.,Near Miss,31.6,MEDIUM,Clear,Day,75,0,8
+INC-0453,2024-12-26,14:33,Excavation,Road/Access Area,No safe access/egress ladder provided in trench.,Near Miss,56.6,HIGH,Windy,Day,75,1,6
+INC-0258,2024-12-29,12:01,Confined Space,Electrical Room,Emergency retrieval system not set up before entry.,Moderate,62.5,HIGH,Clear,Day,89,2,7
+INC-0368,2024-12-31,15:52,Working at Height,Roof,Unprotected edge observed during elevated work.,Moderate,62.6,HIGH,Rain,Day,69,0,5
+INC-0360,2025-01-01,20:06,Scaffolding,Scaffolding Area,Scaffold access partially obstructed.,Near Miss,37.1,MEDIUM,Clear,Night,82,0,5
+INC-0065,2025-01-01,12:20,Electrical Work,Electrical Room,Improper lockout/tagout procedure observed.,Moderate,23.7,LOW,Clear,Day,87,0,4
+INC-0332,2025-01-01,23:46,Housekeeping,Building Site,Debris accumulation observed in walkway.,Minor,3.3,LOW,Clear,Night,85,0,5
+INC-0207,2025-01-02,11:20,Confined Space,Excavation Area,Ventilation equipment not in place for confined space entry.,Minor,43.1,MEDIUM,Clear,Day,91,0,8
+INC-0290,2025-01-02,09:41,Scaffolding,Building Site,Scaffold access partially obstructed.,Minor,18.8,LOW,Clear,Day,100,0,6
+INC-0289,2025-01-02,16:14,Material Handling,Warehouse,Manual handling of heavy load without mechanical aid.,Near Miss,46.8,MEDIUM,Windy,Day,64,0,4
+INC-0308,2025-01-03,11:11,Lifting,Loading Area,Improper lifting zone setup observed.,Moderate,51.4,HIGH,Windy,Day,67,1,5
+INC-0121,2025-01-03,06:12,Excavation,Road/Access Area,No safe access/egress ladder provided in trench.,Near Miss,35.4,MEDIUM,Clear,Day,86,0,8
+INC-0159,2025-01-04,23:16,Welding,Building Site,Inadequate ventilation observed during welding task.,Near Miss,41.0,MEDIUM,Clear,Night,77,2,6
+INC-0021,2025-01-04,18:41,Excavation,Road/Access Area,Inadequate barricading around excavation area.,Near Miss,16.6,LOW,Clear,Day,85,0,6
+INC-0484,2025-01-05,13:08,Material Handling,Warehouse,Obstructed walkway due to stored materials.,Minor,31.3,MEDIUM,Rain,Day,82,0,3
+INC-0336,2025-01-08,21:26,Scaffolding,Building Site,"Scaffold base observed on uneven, unstable ground.",Moderate,21.9,LOW,Clear,Night,87,0,8
+INC-0235,2025-01-08,06:21,Electrical Work,Electrical Room,Exposed wiring near a wet work area.,Minor,54.0,HIGH,Adverse,Day,100,1,7
+INC-0232,2025-01-10,13:34,Electrical Work,Electrical Room,Damaged electrical cable observed.,Minor,42.9,MEDIUM,Rain,Day,96,0,7
+INC-0314,2025-01-11,21:04,Electrical Work,Electrical Room,Damaged electrical cable observed.,Minor,65.1,CRITICAL,Windy,Night,82,1,9
+INC-0485,2025-01-13,10:13,Housekeeping,Building Site,Obstruction observed blocking emergency access route.,Major,46.4,MEDIUM,Rain,Day,65,1,1
+INC-0299,2025-01-15,22:56,Material Handling,Warehouse,Stacked materials observed in an unstable configuration.,Moderate,35.0,MEDIUM,Clear,Night,75,1,6
+INC-0043,2025-01-15,11:12,Housekeeping,Warehouse,Tools left in walking path after task completion.,Near Miss,50.3,HIGH,Adverse,Day,91,2,6
+INC-0073,2025-01-15,12:23,Scaffolding,Building Site,Incomplete scaffold tagging system observed.,Near Miss,40.1,MEDIUM,Clear,Day,64,0,9
+INC-0497,2025-01-17,13:31,Scaffolding,Building Site,Incomplete scaffold tagging system observed.,Near Miss,32.8,MEDIUM,Clear,Day,86,1,6
+INC-0383,2025-01-19,16:01,Housekeeping,Warehouse,Spilled material not cleaned up promptly.,Near Miss,12.9,LOW,Clear,Day,93,1,8
+INC-0414,2025-01-20,15:47,Working at Height,Roof,Unprotected edge observed during elevated work.,Near Miss,31.7,MEDIUM,Clear,Day,77,0,2
+INC-0045,2025-01-21,16:11,Material Handling,Loading Area,Stacked materials observed in an unstable configuration.,Near Miss,49.5,HIGH,Rain,Day,64,0,5
+INC-0192,2025-01-22,14:36,Excavation,Excavation Area,Inadequate barricading around excavation area.,Moderate,71.2,CRITICAL,Clear,Day,64,1,1
+INC-0171,2025-01-22,12:03,Scaffolding,Scaffolding Area,Incomplete scaffold tagging system observed.,Minor,52.2,HIGH,Rain,Day,69,0,1
+INC-0489,2025-01-25,17:37,Confined Space,Excavation Area,No standby attendant present during confined space work.,Major,67.5,CRITICAL,Adverse,Day,73,0,11
+INC-0402,2025-01-26,08:32,Welding,Building Site,Welding conducted near flammable materials.,Minor,32.7,MEDIUM,Windy,Day,79,0,6
+INC-0009,2025-01-28,23:30,Housekeeping,Building Site,Tools left in walking path after task completion.,Near Miss,22.4,LOW,Clear,Night,70,0,4
+INC-0371,2025-01-29,14:12,Scaffolding,Building Site,Missing guardrail on scaffold platform.,Moderate,70.8,CRITICAL,Rain,Day,74,3,6
+INC-0416,2025-01-29,17:16,Housekeeping,Building Site,Debris accumulation observed in walkway.,Moderate,32.9,MEDIUM,Clear,Day,68,0,7
+INC-0241,2025-01-30,16:37,Vehicle Movement,Loading Area,Blind spot hazard noted at site access road.,Minor,33.5,MEDIUM,Clear,Day,78,0,4
+INC-0100,2025-01-30,14:35,Confined Space,Excavation Area,No standby attendant present during confined space work.,Major,76.7,CRITICAL,Clear,Day,83,2,3
+INC-0033,2025-02-04,21:51,Housekeeping,Building Site,Obstruction observed blocking emergency access route.,Minor,17.8,LOW,Rain,Night,75,0,3
+INC-0044,2025-02-04,07:42,Lifting,Loading Area,Rigging inspection not completed before lift.,Near Miss,36.8,MEDIUM,Clear,Day,81,1,4
+INC-0181,2025-02-05,22:28,Material Handling,Warehouse,Improper storage of materials near a walkway.,Minor,45.7,MEDIUM,Rain,Night,59,0,2
+INC-0102,2025-02-06,07:43,Scaffolding,Building Site,"Scaffold base observed on uneven, unstable ground.",Minor,46.7,MEDIUM,Clear,Day,93,2,11
+INC-0277,2025-02-07,19:34,Scaffolding,Building Site,Missing guardrail on scaffold platform.,Moderate,34.9,MEDIUM,Clear,Night,77,1,2
+INC-0195,2025-02-07,08:50,Working at Height,Scaffolding Area,Worker observed near roof edge without guardrail.,Moderate,46.3,MEDIUM,Rain,Day,70,0,5
+INC-0180,2025-02-08,18:28,Welding,Building Site,Welding screen missing in shared work area.,Moderate,37.8,MEDIUM,Clear,Day,61,0,3
+INC-0298,2025-02-10,14:35,Lifting,Loading Area,Load exceeded rated capacity of lifting equipment.,Moderate,41.0,MEDIUM,Windy,Day,95,0,1
+INC-0452,2025-02-10,11:01,Electrical Work,Electrical Room,Damaged electrical cable observed.,Moderate,39.3,MEDIUM,Clear,Day,80,0,6
+INC-0319,2025-02-11,16:16,Housekeeping,Warehouse,Tools left in walking path after task completion.,Near Miss,1.5,LOW,Clear,Day,88,0,5
+INC-0167,2025-02-12,23:14,Lifting,Warehouse,Improper lifting zone setup observed.,Near Miss,36.8,MEDIUM,Clear,Night,76,1,7
+INC-0172,2025-02-12,08:44,Electrical Work,Electrical Room,Live electrical panel left unlocked and unattended.,Major,73.9,CRITICAL,Adverse,Day,77,2,4
+INC-0475,2025-02-12,11:29,Welding,Warehouse,Fire watch not posted during hot work.,Minor,34.3,MEDIUM,Windy,Day,91,1,3
+INC-0346,2025-02-12,16:12,Scaffolding,Building Site,Scaffold access partially obstructed.,Moderate,42.4,MEDIUM,Clear,Day,57,0,8
+INC-0349,2025-02-15,06:32,Electrical Work,Electrical Room,Exposed wiring near a wet work area.,Minor,76.0,CRITICAL,Windy,Day,55,3,4
+INC-0012,2025-02-17,10:37,Lifting,Building Site,Improper lifting zone setup observed.,Minor,29.3,MEDIUM,Clear,Day,83,0,1
+INC-0001,2025-02-18,23:27,Working at Height,Scaffolding Area,Worker observed near roof edge without guardrail.,Near Miss,34.8,MEDIUM,Clear,Night,94,0,2
+INC-0262,2025-02-18,09:17,Lifting,Building Site,Rigging inspection not completed before lift.,Moderate,25.4,LOW,Clear,Day,100,0,8
+INC-0166,2025-02-18,08:56,Scaffolding,Building Site,"Scaffold base observed on uneven, unstable ground.",Minor,24.9,LOW,Clear,Day,96,0,3
+INC-0311,2025-02-18,19:46,Confined Space,Electrical Room,Ventilation equipment not in place for confined space entry.,Near Miss,77.8,CRITICAL,Clear,Night,69,0,9
+INC-0037,2025-02-19,21:18,Electrical Work,Building Site,Exposed wiring near a wet work area.,Minor,28.9,MEDIUM,Clear,Night,92,0,6
+INC-0237,2025-02-19,10:44,Electrical Work,Building Site,Live electrical panel left unlocked and unattended.,Near Miss,72.4,CRITICAL,Adverse,Day,83,0,4
+INC-0455,2025-02-23,19:38,Material Handling,Warehouse,Obstructed walkway due to stored materials.,Major,56.7,HIGH,Rain,Night,72,3,7
+INC-0160,2025-02-24,16:12,Excavation,Road/Access Area,No safe access/egress ladder provided in trench.,Major,50.9,HIGH,Clear,Day,56,0,5
+INC-0132,2025-02-26,09:57,Housekeeping,Warehouse,Debris accumulation observed in walkway.,Near Miss,8.1,LOW,Adverse,Day,92,0,4
+INC-0377,2025-02-28,07:00,Welding,Building Site,Inadequate ventilation observed during welding task.,Near Miss,25.7,LOW,Clear,Day,88,0,5
+INC-0030,2025-02-28,20:30,Vehicle Movement,Loading Area,Vehicle observed exceeding site speed limit.,Minor,45.3,MEDIUM,Windy,Night,72,1,6
+INC-0343,2025-03-02,06:01,Housekeeping,Building Site,Spilled material not cleaned up promptly.,Moderate,19.2,LOW,Rain,Day,79,0,7
+INC-0165,2025-03-02,13:51,Housekeeping,Warehouse,Debris accumulation observed in walkway.,Major,51.2,HIGH,Adverse,Day,68,0,6
+INC-0024,2025-03-03,09:49,Confined Space,Excavation Area,Ventilation equipment not in place for confined space entry.,Minor,79.2,CRITICAL,Windy,Day,67,1,1
+INC-0344,2025-03-08,21:18,Working at Height,Scaffolding Area,Unprotected edge observed during elevated work.,Near Miss,36.2,MEDIUM,Clear,Night,78,0,5
+INC-0351,2025-03-09,16:09,Housekeeping,Warehouse,Debris accumulation observed in walkway.,Minor,41.7,MEDIUM,Clear,Day,56,0,11
+INC-0411,2025-03-09,16:02,Lifting,Building Site,Improper lifting zone setup observed.,Minor,40.8,MEDIUM,Clear,Day,79,1,3
+INC-0234,2025-03-09,23:59,Excavation,Excavation Area,Excavation walls showing signs of instability.,Moderate,68.5,CRITICAL,Clear,Night,38,0,7
+INC-0086,2025-03-10,11:44,Welding,Warehouse,Welding screen missing in shared work area.,Minor,70.7,CRITICAL,Adverse,Day,63,2,3
+INC-0353,2025-03-11,12:37,Scaffolding,Building Site,Scaffold access partially obstructed.,Major,53.3,HIGH,Adverse,Day,56,0,9
+INC-0369,2025-03-12,19:38,Lifting,Warehouse,Load exceeded rated capacity of lifting equipment.,Moderate,65.3,CRITICAL,Windy,Night,66,1,7
+INC-0356,2025-03-12,22:46,Lifting,Loading Area,Rigging inspection not completed before lift.,Minor,60.1,HIGH,Adverse,Night,76,1,7
+INC-0403,2025-03-12,22:09,Electrical Work,Electrical Room,Live electrical panel left unlocked and unattended.,Moderate,58.0,HIGH,Adverse,Night,87,2,5
+INC-0247,2025-03-13,08:03,Housekeeping,Warehouse,Tools left in walking path after task completion.,Near Miss,20.1,LOW,Clear,Day,64,0,5
+INC-0323,2025-03-14,09:33,Excavation,Excavation Area,Excavation walls showing signs of instability.,Near Miss,41.5,MEDIUM,Windy,Day,82,0,7
+INC-0417,2025-03-15,19:44,Housekeeping,Building Site,Obstruction observed blocking emergency access route.,Minor,12.1,LOW,Clear,Night,68,0,4
+INC-0320,2025-03-16,20:38,Working at Height,Roof,Ladder used beyond recommended height without stabilization.,Near Miss,43.6,MEDIUM,Clear,Night,78,0,6
+INC-0161,2025-03-17,20:44,Welding,Building Site,Fire watch not posted during hot work.,Near Miss,23.1,LOW,Rain,Night,85,0,5
+INC-0133,2025-03-17,14:58,Working at Height,Scaffolding Area,Fall arrest harness not properly anchored.,Moderate,87.3,CRITICAL,Adverse,Day,65,1,1
+INC-0338,2025-03-18,23:30,Electrical Work,Building Site,Exposed wiring near a wet work area.,Minor,53.2,HIGH,Clear,Night,84,2,6
+INC-0354,2025-03-18,13:50,Electrical Work,Building Site,Live electrical panel left unlocked and unattended.,Minor,50.1,HIGH,Rain,Day,72,0,8
+INC-0494,2025-03-18,15:13,Lifting,Loading Area,Rigging inspection not completed before lift.,Moderate,46.3,MEDIUM,Adverse,Day,76,0,1
+INC-0347,2025-03-20,10:23,Welding,Building Site,Fire watch not posted during hot work.,Moderate,40.3,MEDIUM,Rain,Day,47,0,6
+INC-0218,2025-03-20,09:15,Lifting,Warehouse,Improper lifting zone setup observed.,Minor,38.4,MEDIUM,Clear,Day,69,0,3
+INC-0428,2025-03-22,11:56,Lifting,Building Site,Rigging inspection not completed before lift.,Moderate,49.4,HIGH,Windy,Day,84,1,5
+INC-0325,2025-03-22,07:19,Excavation,Excavation Area,No safe access/egress ladder provided in trench.,Moderate,69.1,CRITICAL,Windy,Day,76,1,4
+INC-0259,2025-03-22,07:16,Lifting,Loading Area,Rigging inspection not completed before lift.,Minor,16.4,LOW,Rain,Day,87,0,5
+INC-0116,2025-03-22,13:44,Confined Space,Electrical Room,No standby attendant present during confined space work.,Moderate,77.7,CRITICAL,Clear,Day,48,1,5
+INC-0193,2025-03-25,13:55,Welding,Building Site,Welding conducted near flammable materials.,Near Miss,37.1,MEDIUM,Clear,Day,56,0,4
+INC-0281,2025-03-26,18:38,Scaffolding,Scaffolding Area,Scaffold access partially obstructed.,Moderate,49.0,HIGH,Adverse,Day,100,0,8
+INC-0421,2025-03-27,21:43,Material Handling,Warehouse,Improper storage of materials near a walkway.,Near Miss,10.1,LOW,Clear,Night,76,0,4
+INC-0017,2025-03-28,08:57,Excavation,Excavation Area,Excavation walls showing signs of instability.,Moderate,73.9,CRITICAL,Windy,Day,65,0,12
+INC-0029,2025-03-30,14:05,Vehicle Movement,Road/Access Area,Vehicle reversing without a spotter present.,Moderate,22.8,LOW,Clear,Day,85,0,2
+INC-0256,2025-03-31,10:00,Electrical Work,Building Site,Live electrical panel left unlocked and unattended.,Near Miss,59.3,HIGH,Clear,Day,76,1,5
+INC-0134,2025-04-01,15:52,Confined Space,Electrical Room,Confined space entry without atmospheric testing.,Minor,51.8,HIGH,Clear,Day,74,0,8
+INC-0138,2025-04-01,18:09,Welding,Building Site,Welding screen missing in shared work area.,Moderate,40.5,MEDIUM,Rain,Day,78,0,7
+INC-0273,2025-04-01,11:47,Lifting,Loading Area,Exclusion zone around lift not maintained.,Moderate,26.8,LOW,Clear,Day,76,0,1
+INC-0054,2025-04-02,12:26,Confined Space,Electrical Room,Confined space entry without atmospheric testing.,Minor,75.4,CRITICAL,Clear,Day,93,3,3
+INC-0435,2025-04-03,12:09,Confined Space,Electrical Room,Confined space entry without atmospheric testing.,Minor,57.6,HIGH,Clear,Day,74,0,10
+INC-0140,2025-04-03,23:47,Lifting,Warehouse,Exclusion zone around lift not maintained.,Near Miss,18.8,LOW,Clear,Night,94,1,8
+INC-0056,2025-04-04,11:40,Lifting,Loading Area,Rigging inspection not completed before lift.,Minor,45.7,MEDIUM,Clear,Day,44,0,1
+INC-0330,2025-04-06,17:30,Confined Space,Excavation Area,Confined space entry without atmospheric testing.,Major,51.3,HIGH,Clear,Day,85,1,1
+INC-0184,2025-04-08,15:17,Excavation,Excavation Area,Excavation walls showing signs of instability.,Near Miss,37.3,MEDIUM,Adverse,Day,87,0,6
+INC-0094,2025-04-08,15:14,Lifting,Warehouse,Improper lifting zone setup observed.,Minor,31.1,MEDIUM,Clear,Day,88,0,8
+INC-0092,2025-04-09,15:17,Vehicle Movement,Loading Area,Vehicle reversing without a spotter present.,Moderate,32.3,MEDIUM,Rain,Day,73,0,5
+INC-0266,2025-04-10,22:17,Scaffolding,Building Site,"Scaffold base observed on uneven, unstable ground.",Minor,26.5,LOW,Clear,Night,100,0,3
+INC-0077,2025-04-10,17:46,Confined Space,Electrical Room,No standby attendant present during confined space work.,Minor,80.6,CRITICAL,Clear,Day,64,1,6
+INC-0214,2025-04-11,18:24,Working at Height,Roof,Worker observed near roof edge without guardrail.,Minor,63.4,HIGH,Rain,Day,75,1,10
+INC-0104,2025-04-14,08:07,Lifting,Building Site,Rigging inspection not completed before lift.,Minor,42.7,MEDIUM,Rain,Day,61,0,4
+INC-0109,2025-04-14,06:20,Welding,Building Site,Inadequate ventilation observed during welding task.,Near Miss,26.5,LOW,Clear,Day,77,0,4
+INC-0144,2025-04-15,07:05,Excavation,Road/Access Area,No safe access/egress ladder provided in trench.,Minor,54.8,HIGH,Clear,Day,87,1,12
+INC-0424,2025-04-15,21:24,Confined Space,Electrical Room,Ventilation equipment not in place for confined space entry.,Near Miss,44.4,MEDIUM,Clear,Night,89,1,3
+INC-0462,2025-04-19,23:34,Vehicle Movement,Road/Access Area,Blind spot hazard noted at site access road.,Near Miss,48.0,MEDIUM,Adverse,Night,80,0,5
+INC-0028,2025-04-21,12:10,Vehicle Movement,Road/Access Area,Vehicle observed exceeding site speed limit.,Near Miss,32.9,MEDIUM,Rain,Day,82,0,6
+INC-0222,2025-04-22,18:22,Lifting,Building Site,Load exceeded rated capacity of lifting equipment.,Minor,60.1,HIGH,Clear,Day,52,2,1
+INC-0392,2025-04-22,10:57,Vehicle Movement,Road/Access Area,Blind spot hazard noted at site access road.,Minor,35.1,MEDIUM,Rain,Day,81,0,2
+INC-0372,2025-04-22,17:05,Electrical Work,Electrical Room,Exposed wiring near a wet work area.,Minor,58.8,HIGH,Adverse,Day,100,1,6
+INC-0085,2025-04-23,07:44,Excavation,Road/Access Area,No safe access/egress ladder provided in trench.,Moderate,51.2,HIGH,Clear,Day,62,0,1
+INC-0291,2025-04-25,15:19,Electrical Work,Building Site,Improper lockout/tagout procedure observed.,Minor,54.0,HIGH,Clear,Day,61,0,10
+INC-0151,2025-04-26,16:10,Material Handling,Warehouse,Manual handling of heavy load without mechanical aid.,Minor,22.3,LOW,Windy,Day,100,0,7
+INC-0500,2025-04-27,08:09,Working at Height,Roof,Worker observed near roof edge without guardrail.,Minor,51.0,HIGH,Clear,Day,97,1,1
+INC-0174,2025-04-28,18:34,Excavation,Road/Access Area,Inadequate barricading around excavation area.,Near Miss,38.4,MEDIUM,Clear,Day,73,0,9
+INC-0275,2025-04-28,22:21,Material Handling,Warehouse,Manual handling of heavy load without mechanical aid.,Moderate,44.9,MEDIUM,Rain,Night,37,0,5
+INC-0423,2025-04-28,18:41,Welding,Building Site,Fire watch not posted during hot work.,Moderate,43.1,MEDIUM,Clear,Day,60,0,1
+INC-0155,2025-04-29,10:27,Working at Height,Scaffolding Area,Fall arrest harness not properly anchored.,Major,82.7,CRITICAL,Clear,Day,50,3,1
+INC-0084,2025-04-29,21:08,Housekeeping,Building Site,Tools left in walking path after task completion.,Minor,16.2,LOW,Clear,Night,83,0,4
+INC-0124,2025-04-29,15:06,Excavation,Excavation Area,Spoil pile placed too close to excavation edge.,Near Miss,40.0,MEDIUM,Clear,Day,84,0,4
+INC-0257,2025-05-01,16:17,Welding,Building Site,Fire watch not posted during hot work.,Near Miss,19.8,LOW,Clear,Day,97,0,6
+INC-0081,2025-05-04,08:37,Lifting,Warehouse,Exclusion zone around lift not maintained.,Near Miss,21.3,LOW,Clear,Day,100,0,6
+INC-0208,2025-05-05,13:29,Excavation,Road/Access Area,Inadequate barricading around excavation area.,Near Miss,43.1,MEDIUM,Clear,Day,65,0,7
+INC-0060,2025-05-07,22:46,Lifting,Warehouse,Exclusion zone around lift not maintained.,Moderate,11.1,LOW,Rain,Night,100,0,5
+INC-0407,2025-05-08,11:33,Electrical Work,Electrical Room,Improper lockout/tagout procedure observed.,Minor,41.8,MEDIUM,Clear,Day,84,0,10
+INC-0194,2025-05-08,22:04,Material Handling,Warehouse,Manual handling of heavy load without mechanical aid.,Minor,33.5,MEDIUM,Windy,Night,80,1,4
+INC-0186,2025-05-08,06:19,Excavation,Road/Access Area,Spoil pile placed too close to excavation edge.,Minor,79.2,CRITICAL,Adverse,Day,92,3,3
+INC-0305,2025-05-09,19:36,Working at Height,Building Site,Unprotected edge observed during elevated work.,Minor,38.8,MEDIUM,Clear,Night,90,1,1
+INC-0410,2025-05-10,06:25,Electrical Work,Electrical Room,Improper lockout/tagout procedure observed.,Moderate,53.4,HIGH,Windy,Day,88,0,3
+INC-0293,2025-05-12,22:09,Material Handling,Loading Area,Stacked materials observed in an unstable configuration.,Near Miss,39.7,MEDIUM,Windy,Night,84,1,6
+INC-0032,2025-05-14,11:32,Material Handling,Warehouse,Obstructed walkway due to stored materials.,Near Miss,46.6,MEDIUM,Clear,Day,64,0,9
+INC-0495,2025-05-16,10:51,Welding,Building Site,Welding conducted near flammable materials.,Near Miss,56.1,HIGH,Clear,Day,66,0,3
+INC-0050,2025-05-16,09:47,Lifting,Building Site,Improper lifting zone setup observed.,Moderate,48.6,HIGH,Rain,Day,83,1,6
+INC-0488,2025-05-16,22:09,Scaffolding,Scaffolding Area,"Scaffold base observed on uneven, unstable ground.",Minor,55.0,HIGH,Clear,Night,66,1,8
+INC-0337,2025-05-20,06:41,Lifting,Loading Area,Rigging inspection not completed before lift.,Near Miss,29.4,MEDIUM,Clear,Day,92,0,3
+INC-0386,2025-05-21,23:39,Electrical Work,Building Site,Exposed wiring near a wet work area.,Near Miss,53.7,HIGH,Clear,Night,89,3,2
+INC-0213,2025-05-21,11:46,Confined Space,Electrical Room,Confined space entry without atmospheric testing.,Major,61.3,HIGH,Adverse,Day,81,1,8
+INC-0295,2025-05-22,08:39,Vehicle Movement,Road/Access Area,Pedestrian and vehicle routes not segregated.,Moderate,38.1,MEDIUM,Rain,Day,71,0,6
+INC-0036,2025-05-22,22:05,Electrical Work,Electrical Room,Damaged electrical cable observed.,Near Miss,35.1,MEDIUM,Clear,Night,86,0,1
+INC-0122,2025-05-24,12:35,Material Handling,Loading Area,Improper storage of materials near a walkway.,Near Miss,39.8,MEDIUM,Rain,Day,77,0,9
+INC-0046,2025-05-30,21:41,Excavation,Road/Access Area,Inadequate barricading around excavation area.,Minor,38.6,MEDIUM,Clear,Night,77,0,7
+INC-0136,2025-05-31,11:58,Housekeeping,Building Site,Spilled material not cleaned up promptly.,Minor,10.9,LOW,Clear,Day,91,0,2
+INC-0158,2025-06-01,06:40,Electrical Work,Electrical Room,Improper lockout/tagout procedure observed.,Moderate,35.4,MEDIUM,Rain,Day,85,0,3
+INC-0366,2025-06-02,14:02,Working at Height,Roof,Fall arrest harness not properly anchored.,Minor,57.7,HIGH,Clear,Day,100,0,13
+INC-0280,2025-06-04,19:27,Confined Space,Electrical Room,Emergency retrieval system not set up before entry.,Moderate,37.7,MEDIUM,Clear,Night,84,0,8
+INC-0242,2025-06-05,11:26,Scaffolding,Building Site,Scaffold access partially obstructed.,Moderate,49.7,HIGH,Adverse,Day,57,0,8
+INC-0260,2025-06-06,23:34,Lifting,Building Site,Rigging inspection not completed before lift.,Major,52.8,HIGH,Clear,Night,100,2,6
+INC-0014,2025-06-06,06:04,Confined Space,Excavation Area,Confined space entry without atmospheric testing.,Moderate,60.9,HIGH,Windy,Day,59,0,5
+INC-0327,2025-06-10,17:28,Lifting,Building Site,Improper lifting zone setup observed.,Near Miss,25.1,LOW,Clear,Day,98,0,9
+INC-0139,2025-06-11,12:17,Confined Space,Electrical Room,Confined space entry without atmospheric testing.,Near Miss,62.0,HIGH,Windy,Day,76,0,8
+INC-0061,2025-06-12,16:44,Electrical Work,Building Site,Live electrical panel left unlocked and unattended.,Near Miss,38.4,MEDIUM,Clear,Day,62,0,6
+INC-0456,2025-06-17,17:19,Lifting,Warehouse,Improper lifting zone setup observed.,Near Miss,34.7,MEDIUM,Clear,Day,64,0,5
+INC-0433,2025-06-17,16:35,Material Handling,Warehouse,Improper storage of materials near a walkway.,Near Miss,9.7,LOW,Clear,Day,100,0,6
+INC-0203,2025-06-18,18:32,Housekeeping,Building Site,Tools left in walking path after task completion.,Minor,31.8,MEDIUM,Adverse,Day,84,0,4
+INC-0170,2025-06-18,20:46,Scaffolding,Scaffolding Area,"Scaffold base observed on uneven, unstable ground.",Minor,48.9,HIGH,Clear,Night,84,1,5
+INC-0062,2025-06-21,09:24,Housekeeping,Building Site,Tools left in walking path after task completion.,Major,39.7,MEDIUM,Clear,Day,60,1,4
+INC-0231,2025-06-21,07:34,Welding,Warehouse,Inadequate ventilation observed during welding task.,Near Miss,10.1,LOW,Clear,Day,89,0,6
+INC-0396,2025-06-23,13:25,Working at Height,Building Site,Unprotected edge observed during elevated work.,Major,65.5,CRITICAL,Clear,Day,64,0,1
+INC-0472,2025-06-23,10:30,Scaffolding,Building Site,"Scaffold base observed on uneven, unstable ground.",Major,40.7,MEDIUM,Clear,Day,64,0,4
+INC-0238,2025-06-24,21:07,Lifting,Loading Area,Improper lifting zone setup observed.,Near Miss,49.8,HIGH,Rain,Night,49,0,8
+INC-0099,2025-06-25,20:27,Welding,Warehouse,Fire watch not posted during hot work.,Near Miss,37.2,MEDIUM,Clear,Night,64,0,5
+INC-0255,2025-06-26,14:45,Scaffolding,Building Site,Scaffold access partially obstructed.,Minor,42.9,MEDIUM,Rain,Day,70,0,6
+INC-0461,2025-06-26,15:18,Housekeeping,Warehouse,Spilled material not cleaned up promptly.,Near Miss,11.8,LOW,Clear,Day,85,0,6
+INC-0067,2025-06-27,06:23,Electrical Work,Building Site,Damaged electrical cable observed.,Minor,35.1,MEDIUM,Windy,Day,74,0,7
+INC-0288,2025-06-27,09:58,Electrical Work,Electrical Room,Live electrical panel left unlocked and unattended.,Moderate,66.5,CRITICAL,Rain,Day,78,2,6
+INC-0357,2025-06-27,14:17,Excavation,Excavation Area,Excavation walls showing signs of instability.,Minor,53.5,HIGH,Adverse,Day,87,0,4
+INC-0110,2025-06-28,06:25,Electrical Work,Building Site,Live electrical panel left unlocked and unattended.,Near Miss,46.6,MEDIUM,Adverse,Day,77,0,5

@@ -1,0 +1,21 @@
+date,activity_type,location_type,crew_size,weather,shift,ppe_compliance_pct
+2026-08-17,Working at Height,Roof,8,Clear,Night,67
+2026-08-17,Welding,Warehouse,5,Clear,Day,75
+2026-08-17,Material Handling,Loading Area,7,Clear,Night,78
+2026-08-17,Material Handling,Loading Area,3,Clear,Day,87
+2026-08-18,Housekeeping,Warehouse,8,Windy,Day,77
+2026-08-19,Vehicle Movement,Loading Area,3,Windy,Day,90
+2026-08-20,Scaffolding,Building Site,7,Clear,Day,98
+2026-08-21,Confined Space,Electrical Room,4,Clear,Night,76
+2026-08-21,Material Handling,Warehouse,1,Clear,Day,81
+2026-08-21,Material Handling,Loading Area,5,Adverse,Day,63
+2026-08-24,Lifting,Loading Area,11,Clear,Day,65
+2026-08-25,Lifting,Building Site,4,Clear,Day,76
+2026-08-25,Working at Height,Scaffolding Area,7,Adverse,Day,87
+2026-08-26,Housekeeping,Building Site,7,Adverse,Night,73
+2026-08-27,Material Handling,Warehouse,4,Windy,Day,69
+2026-08-28,Lifting,Loading Area,9,Clear,Day,65
+2026-08-28,Welding,Building Site,7,Clear,Day,56
+2026-08-28,Electrical Work,Building Site,3,Rain,Day,78
+2026-08-29,Electrical Work,Building Site,9,Clear,Day,59
+2026-08-30,Confined Space,Excavation Area,6,Adverse,Day,73
