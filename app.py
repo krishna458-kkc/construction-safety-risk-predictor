@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from src.data_storage import ensure_company_data_stores
+from src.data_storage import PREDICTION_HISTORY_PATH, ensure_company_data_stores
 
 
 # =========================================================
@@ -26,11 +26,24 @@ st.set_page_config(
 PAGES = [
     "Overview",
     "Risk Predictor",
-    "Incident Explorer",
-    "Risk Patterns",
-    "Preventive Actions",
-    "Weekly Safety Brief",
+    "Analytics",
+    "Records",
+    "Reports",
+    "Safety",
+    "AI Safety",
+    "Projects",
 ]
+
+NAV_ICONS = {
+    "Overview": "⌂",
+    "Risk Predictor": "◈",
+    "Analytics": "▥",
+    "Records": "▤",
+    "Reports": "▧",
+    "Safety": "🛡",
+    "AI Safety": "✦",
+    "Projects": "▣",
+}
 
 RISK_COLORS = {
     "LOW": "#22c55e",
@@ -385,6 +398,19 @@ def inject_global_css():
             line-height: 1.6;
         }
 
+        .empty-state {
+            background: var(--bg-card);
+            border: 1px dashed var(--border-light);
+            border-radius: var(--radius);
+            padding: 3rem 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon { font-size: 2rem; margin-bottom: 0.65rem; }
+        .empty-state-title { color: var(--text-primary); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem; }
+        .context-chip { display: inline-block; color: #bfdbfe; background: var(--accent-soft); border: 1px solid rgba(37,99,235,.28); border-radius: 999px; padding: .35rem .7rem; font-size: .78rem; margin-top: .65rem; }
+
         /* Checkbox styling */
         .stCheckbox label span {
             font-size: 0.92rem !important;
@@ -486,7 +512,7 @@ def render_top_nav():
             with nav_cols[idx]:
                 is_active = st.session_state.current_page == page_name
                 if st.button(
-                    page_name,
+                    f"{NAV_ICONS[page_name]} {page_name}",
                     key=f"nav_btn_{page_name}",
                     use_container_width=True,
                     type="primary" if is_active else "secondary",
@@ -525,6 +551,20 @@ def render_metric_card(label, value, icon="", variant="default"):
 
 def render_section_title(title):
     st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
+
+
+def render_empty_state(title, message, icon="◌"):
+    """Render a reusable, clearly non-data empty state."""
+    st.markdown(
+        f"""
+        <div class="empty-state">
+            <div class="empty-state-icon">{icon}</div>
+            <div class="empty-state-title">{title}</div>
+            <div>{message}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_risk_banner(risk_level, message):
@@ -627,6 +667,15 @@ inject_global_css()
 render_hero()
 page = render_top_nav()
 
+if page == "Safety":
+    safety_view = st.radio(
+        "Safety workspace",
+        ["Preventive Actions", "Weekly Safety Brief"],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+    page = safety_view
+
 
 # =========================================================
 # OVERVIEW
@@ -635,9 +684,62 @@ page = render_top_nav()
 if page == "Overview":
 
     render_page_header(
-        "Safety Overview",
-        "Dashboard summary of historical construction safety incidents and risk distribution.",
+        "Construction Safety Intelligence",
+        "A clear separation between your site safety activity and the historical benchmark dataset.",
     )
+
+    st.markdown(
+        '<span class="context-chip">Current project / site: not selected</span>',
+        unsafe_allow_html=True,
+    )
+
+    overview_view = st.radio(
+        "Data perspective",
+        ["Site Safety", "Historical Benchmark"],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+
+    if overview_view == "Site Safety":
+        render_section_title("Site Safety")
+        site_history = pd.read_csv(PREDICTION_HISTORY_PATH)
+
+        if site_history.empty:
+            render_empty_state(
+                "No site activity recorded yet",
+                "Make a prediction in Risk Predictor to start building your site's safety history.",
+                "🦺",
+            )
+        else:
+            high_critical = site_history["predicted_risk_level"].isin(
+                ["HIGH", "CRITICAL"]
+            )
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                render_metric_card("Assessments", len(site_history), "◈", "default")
+            with col2:
+                render_metric_card("High / Critical", int(high_critical.sum()), "⚠", "high")
+            with col3:
+                render_metric_card(
+                    "Critical", int((site_history["predicted_risk_level"] == "CRITICAL").sum()), "●", "critical"
+                )
+            with col4:
+                render_metric_card(
+                    "Average PPE", f"{site_history['ppe_compliance_pct'].mean():.1f}%", "🦺", "medium"
+                )
+
+            render_section_title("Recent Predictions")
+            st.dataframe(
+                site_history.tail(10).sort_values("timestamp", ascending=False),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        render_footer()
+        st.stop()
+
+    render_section_title("Historical Benchmark")
+    st.caption("Benchmark information from the historical incident dataset. It does not represent the current company or site.")
 
     if not data_loaded:
 
@@ -1022,6 +1124,8 @@ elif page == "Risk Predictor":
 
     with col1:
 
+        st.caption("ACTIVITY DETAILS & SITE CONDITIONS")
+
         activity_type = st.selectbox(
             "Activity Type",
             activity_options
@@ -1043,6 +1147,8 @@ elif page == "Risk Predictor":
         )
 
     with col2:
+
+        st.caption("CREW, PPE & RECENT HISTORY")
 
         ppe_compliance_pct = st.slider(
             "PPE Compliance (%)",
@@ -1067,6 +1173,8 @@ elif page == "Risk Predictor":
             value=6,
             step=1
         )
+
+    render_section_title("Activity Description")
 
     description = st.text_area(
         "Activity / Hazard Description",
@@ -1350,11 +1458,11 @@ elif page == "Risk Predictor":
 # INCIDENT EXPLORER
 # =========================================================
 
-elif page == "Incident Explorer":
+elif page == "Records":
 
     render_page_header(
-        "📋 Incident Explorer",
-        "Explore historical construction safety incidents and filter by activity, severity, and risk level.",
+        "📋 Historical Incident Records",
+        "Explore the benchmark incident dataset by activity, severity, and risk level.",
     )
 
     if not data_loaded:
@@ -1579,11 +1687,11 @@ elif page == "Incident Explorer":
 # RISK PATTERNS PLACEHOLDER
 # =========================================================
 
-elif page == "Risk Patterns":
+elif page == "Analytics":
 
     render_page_header(
-        "📊 Risk Patterns",
-        "Identify recurring patterns in historical construction safety incidents "
+        "📊 Historical Risk Analytics",
+        "Identify recurring patterns in historical benchmark incidents "
         "to understand which activities and conditions are associated with higher risk.",
     )
 
@@ -1747,7 +1855,50 @@ elif page == "Risk Patterns":
 
 
 # =========================================================
-# PREVENTIVE ACTIONS PLACEHOLDER
+# FUTURE WORKSPACES (INTENTIONALLY NOT IMPLEMENTED YET)
+# =========================================================
+
+elif page == "Reports":
+
+    render_page_header(
+        "▧ Reports",
+        "A future workspace for formal safety reporting.",
+    )
+    render_empty_state(
+        "Reports are being prepared",
+        "No reports or exports have been generated in this application yet.",
+        "▧",
+    )
+
+
+elif page == "AI Safety":
+
+    render_page_header(
+        "✦ AI Safety",
+        "A future workspace for assisted safety intelligence.",
+    )
+    render_empty_state(
+        "AI Safety is not enabled",
+        "AI functionality is intentionally not part of this phase.",
+        "✦",
+    )
+
+
+elif page == "Projects":
+
+    render_page_header(
+        "▣ Projects",
+        "A future workspace for multi-project safety management.",
+    )
+    render_empty_state(
+        "Project management is being prepared",
+        "The project data foundation exists, but project management has not been implemented yet.",
+        "▣",
+    )
+
+
+# =========================================================
+# PREVENTIVE ACTIONS
 # =========================================================
 
 elif page == "Preventive Actions":
