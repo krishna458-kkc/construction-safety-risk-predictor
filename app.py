@@ -4,6 +4,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from src.data_storage import ensure_company_data_stores
+
 
 # =========================================================
 # PAGE CONFIGURATION
@@ -591,6 +593,8 @@ def render_footer():
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "data", "incidents.csv")
 
+ensure_company_data_stores()
+
 
 # =========================================================
 # LOAD DATA
@@ -936,6 +940,7 @@ elif page == "Risk Predictor":
     # -----------------------------------------------------
 
     from src.predictor import predict
+    from src.data_storage import record_prediction
     from src.recommendations import get_recommendations
     from src.toolbox_talk import get_toolbox_topics
 
@@ -1069,6 +1074,12 @@ elif page == "Risk Predictor":
         placeholder="Example: Unprotected edge observed during elevated work."
     )
 
+    project_site = st.text_input(
+        "Project / Site",
+        value="",
+        placeholder="Optional: project or site name"
+    )
+
     st.markdown("<div style='margin:1rem 0;'></div>", unsafe_allow_html=True)
 
     # -----------------------------------------------------
@@ -1097,6 +1108,12 @@ elif page == "Risk Predictor":
             result = predict(
                 activity_data,
                 strict=True
+            )
+
+            record_prediction(
+                project_site,
+                activity_data,
+                result,
             )
 
             # -------------------------------------------------
