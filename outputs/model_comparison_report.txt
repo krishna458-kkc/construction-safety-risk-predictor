@@ -1,0 +1,70 @@
+CONSTRUCTION SAFETY RISK PREDICTOR — MODEL COMPARISON REPORT
+================================================================================
+
+DATASET SPECIFICATIONS
+- Benchmark Incidents Dataset (data/incidents.csv): 500 rows (SHA256: b16f807cef66ce112f792a8dd6c12c6396e693f3a4d4abe4fb5ce28d977e49ce)
+- Expanded Training Dataset (data/training_incidents_expanded.csv): 2000 rows
+- Held-Out Benchmark Test Set: 100 rows (Stratified 20% split, isolated)
+
+================================================================================
+MODEL COMPARISON TABLE (Held-Out Test Set n=100)
+================================================================================
+Metric                         | Current Model        | Candidate Model     
+--------------------------------------------------------------------------------
+Model Name                     | Baseline (LogReg 500) | candidate_logistic_regression
+Accuracy                       | 0.6500               | 0.6500              
+Precision (Macro)              | 0.6250               | 0.6330              
+Precision (Weighted)           | 0.6578               | 0.6564              
+Recall (Macro)                 | 0.6504               | 0.6669              
+Recall (Weighted)              | 0.6500               | 0.6500              
+F1 Score (Macro)               | 0.6350               | 0.6469              
+F1 Score (Weighted)            | 0.6510               | 0.6504              
+HIGH-Class Recall              | 0.6154               | 0.6538              
+CRITICAL-Class Recall          | 0.6000               | 0.7000              
+Priority Recall (HIGH+CRIT)    | 0.6077               | 0.6769              
+Dangerous False Negatives      | 5                    | 6                   
+Inference Latency (ms)         | 17.968               | 11.890              
+================================================================================
+
+CLASSIFICATION REPORTS
+
+--- Baseline Model Classification Report ---
+              precision    recall  f1-score   support
+
+         LOW     0.6250    0.7500    0.6818        20
+      MEDIUM     0.7368    0.6364    0.6829        44
+        HIGH     0.5926    0.6154    0.6038        26
+    CRITICAL     0.5455    0.6000    0.5714        10
+
+    accuracy                         0.6500       100
+   macro avg     0.6250    0.6504    0.6350       100
+weighted avg     0.6578    0.6500    0.6510       100
+
+Confusion Matrix:
+[[15  5  0  0]
+ [ 9 28  7  0]
+ [ 0  5 16  5]
+ [ 0  0  4  6]]
+
+--- Top Candidate Model (candidate_logistic_regression) Classification Report ---
+              precision    recall  f1-score   support
+
+         LOW     0.6087    0.7000    0.6512        20
+      MEDIUM     0.7105    0.6136    0.6585        44
+        HIGH     0.6296    0.6538    0.6415        26
+    CRITICAL     0.5833    0.7000    0.6364        10
+
+    accuracy                         0.6500       100
+   macro avg     0.6330    0.6669    0.6469       100
+weighted avg     0.6564    0.6500    0.6504       100
+
+Confusion Matrix:
+[[14  5  1  0]
+ [ 9 27  6  2]
+ [ 0  6 17  3]
+ [ 0  0  3  7]]
+
+================================================================================
+FINAL DECISION: KEEP CURRENT MODEL
+Production Model Replaced: False
+================================================================================
