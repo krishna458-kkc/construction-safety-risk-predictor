@@ -1,0 +1,80 @@
+CONSTRUCTION SAFETY RISK PREDICTOR - MODEL COMPARISON V4 REPORT
+==============================================================================================================
+
+1. DATASET & ARTIFACT SPECIFICATIONS
+--------------------------------------------------------------------------------------------------------------
+- Benchmark Dataset: data/incidents.csv (500 rows, SHA256: b16f807cef66ce112f792a8dd6c12c6396e693f3a4d4abe4fb5ce28d977e49ce)
+- Baseline Model: models/risk_model.joblib (trained on 400 original records)
+- Candidate V1: models/risk_model_candidate.joblib (trained on 2,000 records, expanded V1)
+- Candidate V2: models/risk_model_candidate_v2.joblib (trained on 2,000 records, refined V2)
+- Candidate V3: models/risk_model_candidate_v3.joblib (trained on 2,000 records, controlled noise V3)
+- Candidate V4: models/risk_model_candidate_v4.joblib (safety-aware decision boundary margin = 0.12)
+- Held-Out Benchmark Test Set: 100 rows (Stratified 20% split, 100% isolated)
+
+2. COMPREHENSIVE FIVE-WAY MODEL COMPARISON TABLE
+==============================================================================================================
+Metric                     | Baseline (400) | Candidate V1   | Candidate V2   | Candidate V3   | Candidate V4  
+--------------------------------------------------------------------------------------------------------------
+Accuracy                   | 0.6500         | 0.6500         | 0.6400         | 0.6500         | 0.6800        
+Macro Precision            | 0.6250         | 0.6330         | 0.6594         | 0.6636         | 0.6862        
+Weighted Precision         | 0.6578         | 0.6564         | 0.6483         | 0.6551         | 0.6884        
+Macro Recall               | 0.6504         | 0.6669         | 0.6680         | 0.6515         | 0.6803        
+Weighted Recall            | 0.6500         | 0.6500         | 0.6400         | 0.6500         | 0.6800        
+Macro F1                   | 0.6350         | 0.6469         | 0.6590         | 0.6538         | 0.6772        
+Weighted F1                | 0.6510         | 0.6504         | 0.6394         | 0.6499         | 0.6785        
+LOW Recall                 | 0.7500         | 0.7000         | 0.7500         | 0.7000         | 0.7000        
+MEDIUM Recall              | 0.6364         | 0.6136         | 0.5682         | 0.6136         | 0.6136        
+HIGH Recall                | 0.6154         | 0.6538         | 0.6538         | 0.6923         | 0.8077        
+CRITICAL Recall            | 0.6000         | 0.7000         | 0.7000         | 0.6000         | 0.6000        
+Priority Recall (H+C)      | 0.6077         | 0.6769         | 0.6769         | 0.6462         | 0.7038        
+Dangerous False Negs       | 5              | 6              | 7              | 7              | 4             
+Inference Latency (ms)     | 7.185          | 6.968          | 6.964          | 7.020          | 6.930         
+==============================================================================================================
+
+3. CONFUSION MATRICES (Held-Out Test Set)
+--------------------------------------------------------------------------------------------------------------
+--- Baseline Model ---
+[[15  5  0  0]
+ [ 9 28  7  0]
+ [ 0  5 16  5]
+ [ 0  0  4  6]]
+
+--- Candidate V1 ---
+[[14  5  1  0]
+ [ 9 27  6  2]
+ [ 0  6 17  3]
+ [ 0  0  3  7]]
+
+--- Candidate V2 ---
+[[15  5  0  0]
+ [11 25  8  0]
+ [ 0  7 17  2]
+ [ 0  0  3  7]]
+
+--- Candidate V3 ---
+[[14  6  0  0]
+ [ 9 27  7  1]
+ [ 0  7 18  1]
+ [ 0  0  4  6]]
+
+--- Candidate V4 ---
+[[14  6  0  0]
+ [ 9 27  7  1]
+ [ 0  4 21  1]
+ [ 0  0  4  6]]
+
+4. SAFETY ACCEPTANCE CRITERIA EVALUATION (Candidate V4 vs Baseline)
+--------------------------------------------------------------------------------------------------------------
+1. Dangerous False Negatives <= Baseline (5): PASS (4)
+2. Macro F1 >= 0.6350 (0.6350): PASS (0.6772)
+3. HIGH Recall >= 0.6154 (0.6154): PASS (0.8077)
+4. CRITICAL Recall >= 0.6000 (0.6000): PASS (0.6000)
+5. Priority Recall >= 0.6077 (0.6077): PASS (0.7038)
+6. No serious overfitting (Train Acc: 0.7405, Test Acc: 0.6800): PASS
+7. Inference Latency practical (<25ms): PASS (6.930 ms)
+8. Predictor Interface Compatibility: PASS
+
+==============================================================================================================
+FINAL DECISION: CANDIDATE V4 PASSES SAFETY EVALUATION — READY FOR PRODUCTION REVIEW
+Production Model Replaced: False (preservation guarantee)
+==============================================================================================================

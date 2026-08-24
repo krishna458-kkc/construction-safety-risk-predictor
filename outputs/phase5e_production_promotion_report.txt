@@ -1,0 +1,72 @@
+CONSTRUCTION SAFETY RISK PREDICTOR — PHASE 5E PRODUCTION PROMOTION REPORT
+===============================================================================================
+
+1. MODEL PROMOTION SUMMARY
+-----------------------------------------------------------------------------------------------
+OLD PRODUCTION MODEL : 400-record baseline (models/risk_model_baseline_backup_phase5e.joblib)
+NEW PRODUCTION MODEL : Candidate V4 (models/risk_model.joblib)
+TRAINING DATASET     : data/training_incidents_expanded_v3.csv (2,000 realistic records)
+SAFETY-AWARE RULE    : Escalate to HIGH when predicted MEDIUM and P(MEDIUM) - P(HIGH) <= 0.12
+DANGEROUS FALSE NEGS : 5 -> 4 (REDUCED BELOW BASELINE)
+HIGH-CLASS RECALL    : 0.6154 (16/26) -> 0.8077 (21/26) (+19.23% GAIN)
+MACRO F1 SCORE       : 0.6350 -> 0.6772 (+4.22% GAIN)
+OVERALL ACCURACY     : 0.6500 -> 0.6800 (+3.00% GAIN)
+
+2. SHA-256 HASH VERIFICATION AUDIT
+-----------------------------------------------------------------------------------------------
+1. Active Production Model (models/risk_model.joblib)                       : 5f0250423d231f60ceaa78fa9e3facbadc91358bbe6b2716db523a98693279ef
+2. Verified Backup Model (models/risk_model_baseline_backup_phase5e.joblib) : c18de2601cf6d9c794e18384c61f0e12acb257e609f4ac2f59b14e20e09c04d8
+3. Candidate V4 Model (models/risk_model_candidate_v4.joblib)               : 5f0250423d231f60ceaa78fa9e3facbadc91358bbe6b2716db523a98693279ef
+4. Benchmark Historical Incidents (data/incidents.csv)                      : b16f807cef66ce112f792a8dd6c12c6396e693f3a4d4abe4fb5ce28d977e49ce
+5. Planned Activities (data/planned_activities.csv)                         : 09866df1fa65e4682d8ccf69ea4a6d513a6b3f0a6b4cc39b82ad4e7da3d11b6d
+6. Incident Records (data/incident_records.csv)                             : 94377e189ac0f75f348b5491b2f87df9ab5e8e6064a536b39e504cb0f1ad80e5
+7. Prediction History (data/prediction_history.csv)                         : ee0eaadb032b168d25b98ef1df1b30a771ca2f270865d6267edfcdbbec205301
+8. Projects Store (data/projects.csv)                                       : 77b645320e37f0e65ab6eecd9567e927c596a22cbf56901fe6542641060888e2
+
+3. POST-PROMOTION BENCHMARK METRICS (Held-Out Test Set n=100)
+===============================================================================================
+Metric                         | Baseline (Original)  | Promoted Production (V4) 
+-----------------------------------------------------------------------------------------------
+Accuracy                       | 0.6500               | 0.6800                   
+Macro Precision                | 0.6250               | 0.6862                   
+Weighted Precision             | 0.6578               | 0.6884                   
+Macro Recall                   | 0.6504               | 0.6803                   
+Weighted Recall                | 0.6500               | 0.6800                   
+Macro F1 Score                 | 0.6350               | 0.6772                   
+Weighted F1 Score              | 0.6510               | 0.6785                   
+LOW Recall                     | 0.7500 (15/20)       | 0.7000 (14/20)           
+MEDIUM Recall                  | 0.6364 (28/44)       | 0.6136 (27/44)           
+HIGH Recall                    | 0.6154 (16/26)       | 0.8077 (21/26)           
+CRITICAL Recall                | 0.6000 (6/10)        | 0.6000 (6/10)            
+Priority Recall (H+C)          | 0.6077               | 0.7038                   
+Dangerous False Negatives      | 5                    | 4                        
+Inference Latency              | 15.185 ms            | 7.033 ms                 
+===============================================================================================
+
+4. SAFETY-AWARE DECISION RULE SPECIFICATION
+-----------------------------------------------------------------------------------------------
+Formula:
+  if predicted_class == 'MEDIUM' and (P(MEDIUM) - P(HIGH)) <= 0.12:
+      final_class = 'HIGH'
+
+Selection Evidence:
+- Derived STRICTLY on the 400 internal validation partition of data/training_incidents_expanded_v3.csv
+- Zero data leakage: the 100-record benchmark test set was never accessed during threshold tuning
+- Reduced validation dangerous false negatives from 12 down to 10 while maintaining 0.6844 Macro F1
+- On the held-out benchmark, reduced dangerous false negatives from 5 to 4 and increased HIGH recall from 61.5% to 80.8%
+
+5. ROLLBACK READINESS VERIFICATION
+-----------------------------------------------------------------------------------------------
+Backup Artifact   : models/risk_model_baseline_backup_phase5e.joblib
+Backup Status     : Loaded and verified executable via tests/test_phase5e_promotion.py
+Rollback Command  : copy models/risk_model_baseline_backup_phase5e.joblib models/risk_model.joblib
+
+6. AUTOMATED TEST SUITE STATUS
+-----------------------------------------------------------------------------------------------
+- tests/test_phase5e_promotion.py : 7 / 7 PASSED
+- tests/test_phase5_integration.py: 8 / 8 PASSED
+- Total Automated Tests           : 15 / 15 PASSED (100%)
+
+===============================================================================================
+FINAL STATUS: PRODUCTION PROMOTION COMPLETED SUCCESSFULLY
+===============================================================================================

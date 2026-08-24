@@ -101,6 +101,12 @@ RISK_LEVEL_SCORE_MIDPOINT = {
     "CRITICAL": 82.5,    # midpoint of [65, 100]
 }
 
+# Safety-Aware Decision Boundary Margin (Validated in Phase 5D)
+# If the model's top predicted class is MEDIUM, but P(HIGH) is within 0.12 of
+# P(MEDIUM) (i.e. P(MEDIUM) - P(HIGH) <= 0.12), the decision is safely
+# escalated to HIGH to prevent dangerous false negatives on borderline cases.
+SAFETY_MARGIN_MEDIUM_TO_HIGH = 0.12
+
 TOP_N_FACTORS = 4
 
 # Cache so app.py doesn't re-load the .joblib file from disk on every rerun
@@ -284,6 +290,15 @@ def predict(activity_dict: dict[str, Any], strict: bool = False, model=None) -> 
     prob_by_class = dict(zip(class_order, probabilities))
 
     predicted_class = max(prob_by_class, key=prob_by_class.get)
+
+    # Apply validated Phase 5D safety-aware decision boundary rule:
+    # If the model's top predicted class is MEDIUM, but P(HIGH) is within
+    # SAFETY_MARGIN_MEDIUM_TO_HIGH (0.12) of P(MEDIUM), escalate to HIGH
+    # to protect against dangerous false negatives on borderline cases.
+    if predicted_class == "MEDIUM" and "HIGH" in prob_by_class:
+        if (prob_by_class["MEDIUM"] - prob_by_class["HIGH"]) <= SAFETY_MARGIN_MEDIUM_TO_HIGH:
+            predicted_class = "HIGH"
+
     predicted_idx = class_order.index(predicted_class)
     confidence = float(prob_by_class[predicted_class])
 
