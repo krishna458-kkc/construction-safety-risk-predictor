@@ -1,1205 +1,556 @@
+"""Construction Safety Intelligence Platform.
+
+Phase 3A — Real Company Safety Intelligence.
+A unified predictive safety intelligence and risk management platform.
+"""
+
+from datetime import date, datetime, timezone
 import os
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
-from src.data_storage import PREDICTION_HISTORY_PATH, ensure_company_data_stores
-
-
-# =========================================================
-# PAGE CONFIGURATION
-# =========================================================
-
-st.set_page_config(
-    page_title="Construction Safety Risk Predictor",
-    page_icon="🦺",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+from src.company_analytics import (
+    calculate_activity_risk_metrics,
+    calculate_ppe_analysis,
+    calculate_project_comparison,
+    calculate_site_kpis,
+    filter_by_date_range,
+    safe_parse_datetime,
+)
+from src.data_storage import (
+    INCIDENT_RECORD_COLUMNS,
+    INCIDENT_RECORDS_PATH,
+    PREDICTION_HISTORY_COLUMNS,
+    PREDICTION_HISTORY_PATH,
+    PROJECTS_PATH,
+    ensure_company_data_stores,
+    record_prediction,
+)
+from src.predictor import predict
+from src.recommendations import get_recommendations
+from src.toolbox_talk import get_toolbox_topics
+from src.ui.charts import (
+    MONO_ACCENT_SCALE,
+    RISK_COLOR_DISCRETE_MAP,
+    SAFETY_ALERT_SCALE,
+    style_mercury_chart,
+)
+from src.ui.components import (
+    PAGES,
+    render_empty_state,
+    render_footer,
+    render_global_header,
+    render_metric_card,
+    render_page_hero,
+    render_risk_badge,
+    render_section_heading,
+    render_top_navigation,
+)
+from src.ui.theme import (
+    COLOR_ACCENT_COBALT,
+    COLOR_BORDER_LIGHT,
+    COLOR_SURFACE,
+    COLOR_TEXT_PRIMARY,
+    COLOR_TEXT_SECONDARY,
+    SAFETY_COLORS,
+    SAFETY_COLORS_SOFT,
+    inject_mercury_css,
 )
 
-
-# =========================================================
-# UI HELPERS & GLOBAL STYLES
-# =========================================================
-
-PAGES = [
-    "Overview",
-    "Risk Predictor",
-    "Analytics",
-    "Records",
-    "Reports",
-    "Safety",
-    "AI Safety",
-    "Projects",
-]
-
-NAV_ICONS = {
-    "Overview": "⌂",
-    "Risk Predictor": "◈",
-    "Analytics": "▥",
-    "Records": "▤",
-    "Reports": "▧",
-    "Safety": "🛡",
-    "AI Safety": "✦",
-    "Projects": "▣",
-}
-
-RISK_COLORS = {
-    "LOW": "#22c55e",
-    "MEDIUM": "#3b82f6",
-    "HIGH": "#f59e0b",
-    "CRITICAL": "#ef4444",
-}
-
-
-def inject_global_css():
-    st.markdown(
-        """
-        <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-        :root {
-            --bg-primary: #0b0f14;
-            --bg-secondary: #111827;
-            --bg-card: #1a2332;
-            --bg-card-hover: #1f2937;
-            --border: #2d3a4f;
-            --border-light: #374151;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --accent: #2563eb;
-            --accent-soft: rgba(37, 99, 235, 0.15);
-            --safe: #22c55e;
-            --safe-soft: rgba(34, 197, 94, 0.12);
-            --warning: #f59e0b;
-            --warning-soft: rgba(245, 158, 11, 0.12);
-            --danger: #ef4444;
-            --danger-soft: rgba(239, 68, 68, 0.12);
-            --radius: 12px;
-            --radius-sm: 8px;
-            --shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
-        }
-
-        html, body, [class*="css"] {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
-        .stApp {
-            background: linear-gradient(180deg, #0b0f14 0%, #0f172a 100%);
-            color: var(--text-primary);
-        }
-
-        /* Hide default sidebar */
-        section[data-testid="stSidebar"],
-        [data-testid="stSidebarCollapsedControl"],
-        [data-testid="collapsedControl"] {
-            display: none !important;
-        }
-
-        .block-container {
-            padding-top: 1rem;
-            padding-bottom: 3rem;
-            max-width: 1400px;
-        }
-
-        /* Hero header */
-        .app-hero {
-            background: linear-gradient(135deg, #1a2332 0%, #111827 50%, #0f172a 100%);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 2rem 2.5rem;
-            margin-bottom: 1.25rem;
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .app-hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 280px;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.06));
-            pointer-events: none;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            background: var(--accent-soft);
-            color: #93c5fd;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            padding: 0.35rem 0.75rem;
-            border-radius: 999px;
-            border: 1px solid rgba(37, 99, 235, 0.25);
-            margin-bottom: 0.75rem;
-        }
-
-        .hero-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0 0 0.5rem 0;
-            line-height: 1.2;
-        }
-
-        .hero-subtitle {
-            font-size: 1.15rem;
-            font-weight: 500;
-            color: #cbd5e1;
-            margin: 0 0 0.75rem 0;
-        }
-
-        .hero-desc {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            margin: 0;
-            max-width: 720px;
-            line-height: 1.6;
-        }
-
-        /* Top navigation */
-        .top-nav-wrapper {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 0.35rem;
-            margin-bottom: 1.75rem;
-            box-shadow: var(--shadow);
-        }
-
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-container-marker)
-            div[data-testid="stHorizontalBlock"] {
-            gap: 0.25rem !important;
-        }
-
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-container-marker)
-            div[data-testid="stHorizontalBlock"] button[kind="secondary"] {
-            background: transparent !important;
-            border: none !important;
-            color: var(--text-secondary) !important;
-            font-weight: 500 !important;
-            font-size: 0.82rem !important;
-            padding: 0.65rem 0.5rem !important;
-            border-radius: var(--radius-sm) !important;
-            transition: all 0.15s ease !important;
-            box-shadow: none !important;
-            white-space: nowrap !important;
-        }
-
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-container-marker)
-            div[data-testid="stHorizontalBlock"] button[kind="secondary"]:hover {
-            background: rgba(255, 255, 255, 0.05) !important;
-            color: var(--text-primary) !important;
-        }
-
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-container-marker)
-            div[data-testid="stHorizontalBlock"] button[kind="primary"] {
-            background: var(--accent) !important;
-            border: 1px solid rgba(37, 99, 235, 0.5) !important;
-            color: #fff !important;
-            font-weight: 600 !important;
-            font-size: 0.82rem !important;
-            padding: 0.65rem 0.5rem !important;
-            border-radius: var(--radius-sm) !important;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
-            white-space: nowrap !important;
-        }
-
-        /* Page sections */
-        .page-header {
-            margin-bottom: 1.5rem;
-        }
-
-        .page-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0 0 0.35rem 0;
-        }
-
-        .page-subtitle {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            margin: 0;
-            line-height: 1.5;
-        }
-
-        .section-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.25rem 1.5rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .section-title {
-            font-size: 1.05rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin: 0 0 1rem 0;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .section-title-sm {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin: 0 0 0.75rem 0;
-        }
-
-        /* Metric cards */
-        .metric-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.15rem 1.25rem;
-            height: 100%;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .metric-card.default { border-top: 3px solid var(--accent); }
-        .metric-card.critical { border-top: 3px solid var(--danger); }
-        .metric-card.high { border-top: 3px solid var(--warning); }
-        .metric-card.medium { border-top: 3px solid #3b82f6; }
-        .metric-card.low { border-top: 3px solid var(--safe); }
-        .metric-card.neutral { border-top: 3px solid var(--border-light); }
-
-        .metric-card-icon {
-            font-size: 1.25rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .metric-card-label {
-            font-size: 0.78rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            margin-bottom: 0.35rem;
-        }
-
-        .metric-card-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            line-height: 1.1;
-        }
-
-        /* Risk result banner */
-        .risk-banner {
-            border-radius: var(--radius);
-            padding: 1rem 1.25rem;
-            margin: 1rem 0;
-            font-weight: 500;
-            font-size: 0.95rem;
-            border: 1px solid;
-        }
-
-        .risk-banner.critical {
-            background: var(--danger-soft);
-            border-color: rgba(239, 68, 68, 0.35);
-            color: #fca5a5;
-        }
-
-        .risk-banner.high {
-            background: var(--warning-soft);
-            border-color: rgba(245, 158, 11, 0.35);
-            color: #fcd34d;
-        }
-
-        .risk-banner.medium {
-            background: var(--accent-soft);
-            border-color: rgba(37, 99, 235, 0.35);
-            color: #93c5fd;
-        }
-
-        .risk-banner.low {
-            background: var(--safe-soft);
-            border-color: rgba(34, 197, 94, 0.35);
-            color: #86efac;
-        }
-
-        /* Result metrics */
-        .result-metric {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.25rem;
-            text-align: center;
-        }
-
-        .result-metric-label {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            margin-bottom: 0.5rem;
-        }
-
-        .result-metric-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        /* List items */
-        .list-item {
-            padding: 0.6rem 0.85rem;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-sm);
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            color: var(--text-primary);
-        }
-
-        .list-item-factor {
-            padding: 0.65rem 0.85rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-left: 3px solid var(--accent);
-            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .recommendation-item {
-            padding: 0.6rem 0.85rem;
-            background: var(--safe-soft);
-            border: 1px solid rgba(34, 197, 94, 0.2);
-            border-radius: var(--radius-sm);
-            margin-bottom: 0.45rem;
-            font-size: 0.9rem;
-            color: #bbf7d0;
-        }
-
-        .toolbox-item {
-            padding: 0.5rem 0.85rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        /* Insight callout */
-        .insight-box {
-            background: var(--accent-soft);
-            border: 1px solid rgba(37, 99, 235, 0.25);
-            border-radius: var(--radius);
-            padding: 1rem 1.25rem;
-            color: #bfdbfe;
-            font-size: 0.92rem;
-            line-height: 1.6;
-        }
-
-        .empty-state {
-            background: var(--bg-card);
-            border: 1px dashed var(--border-light);
-            border-radius: var(--radius);
-            padding: 3rem 1.5rem;
-            text-align: center;
-            color: var(--text-secondary);
-        }
-
-        .empty-state-icon { font-size: 2rem; margin-bottom: 0.65rem; }
-        .empty-state-title { color: var(--text-primary); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem; }
-        .context-chip { display: inline-block; color: #bfdbfe; background: var(--accent-soft); border: 1px solid rgba(37,99,235,.28); border-radius: 999px; padding: .35rem .7rem; font-size: .78rem; margin-top: .65rem; }
-
-        /* Checkbox styling */
-        .stCheckbox label span {
-            font-size: 0.92rem !important;
-            color: var(--text-primary) !important;
-        }
-
-        div[data-testid="stCheckbox"] {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-sm);
-            padding: 0.5rem 0.75rem;
-            margin-bottom: 0.4rem;
-        }
-
-        /* Dataframe */
-        div[data-testid="stDataFrame"] {
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-        }
-
-        /* Inputs */
-        div[data-testid="stSelectbox"] label,
-        div[data-testid="stNumberInput"] label,
-        div[data-testid="stSlider"] label,
-        div[data-testid="stTextInput"] label,
-        div[data-testid="stTextArea"] label {
-            color: var(--text-secondary) !important;
-            font-weight: 500 !important;
-            font-size: 0.85rem !important;
-        }
-
-        /* Footer */
-        .app-footer {
-            margin-top: 2.5rem;
-            padding: 1rem 1.25rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
-
-        /* Responsive nav */
-        @media (max-width: 900px) {
-            .hero-title { font-size: 1.5rem; }
-            .hero-subtitle { font-size: 1rem; }
-            .app-hero { padding: 1.5rem; }
-            div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-container-marker)
-                div[data-testid="stHorizontalBlock"] button[kind="secondary"],
-            div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-container-marker)
-                div[data-testid="stHorizontalBlock"] button[kind="primary"] {
-                font-size: 0.72rem !important;
-                padding: 0.5rem 0.25rem !important;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .block-container { padding-left: 1rem; padding-right: 1rem; }
-            .metric-card-value { font-size: 1.35rem; }
-        }
-
-        hr { border-color: var(--border) !important; margin: 1.5rem 0 !important; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_hero():
-    st.markdown(
-        """
-        <div class="app-hero">
-            <div class="hero-badge">🦺 Construction Safety Analytics</div>
-            <h1 class="hero-title">Construction Safety Risk Predictor</h1>
-            <p class="hero-subtitle">Predict construction activity risk before work begins</p>
-            <p class="hero-desc">
-                Analyze planned activities, identify recurring safety patterns,
-                and receive preventive safety recommendations.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_top_nav():
-    if "current_page" not in st.session_state:
-        st.session_state.current_page = PAGES[0]
-
-    with st.container():
-        st.markdown(
-            '<div class="nav-container-marker"></div><div class="top-nav-wrapper"></div>',
-            unsafe_allow_html=True,
-        )
-        nav_cols = st.columns(len(PAGES))
-        for idx, page_name in enumerate(PAGES):
-            with nav_cols[idx]:
-                is_active = st.session_state.current_page == page_name
-                if st.button(
-                    f"{NAV_ICONS[page_name]} {page_name}",
-                    key=f"nav_btn_{page_name}",
-                    use_container_width=True,
-                    type="primary" if is_active else "secondary",
-                ):
-                    st.session_state.current_page = page_name
-                    st.rerun()
-
-    return st.session_state.current_page
-
-
-def render_page_header(title, subtitle=""):
-    subtitle_html = f'<p class="page-subtitle">{subtitle}</p>' if subtitle else ""
-    st.markdown(
-        f"""
-        <div class="page-header">
-            <h2 class="page-title">{title}</h2>
-            {subtitle_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_metric_card(label, value, icon="", variant="default"):
-    st.markdown(
-        f"""
-        <div class="metric-card {variant}">
-            <div class="metric-card-icon">{icon}</div>
-            <div class="metric-card-label">{label}</div>
-            <div class="metric-card-value">{value}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_section_title(title):
-    st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
-
-
-def render_empty_state(title, message, icon="◌"):
-    """Render a reusable, clearly non-data empty state."""
-    st.markdown(
-        f"""
-        <div class="empty-state">
-            <div class="empty-state-icon">{icon}</div>
-            <div class="empty-state-title">{title}</div>
-            <div>{message}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_risk_banner(risk_level, message):
-    level = risk_level.lower()
-    st.markdown(
-        f'<div class="risk-banner {level}">{message}</div>',
-        unsafe_allow_html=True,
-    )
-
-
-def render_result_metric(label, value, color="#f1f5f9"):
-    st.markdown(
-        f"""
-        <div class="result-metric">
-            <div class="result-metric-label">{label}</div>
-            <div class="result-metric-value" style="color:{color};">{value}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def style_plotly_fig(fig, title=None):
-    fig.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#94a3b8", family="Inter, sans-serif"),
-        title=dict(
-            text=title or fig.layout.title.text,
-            font=dict(color="#f1f5f9", size=14),
-        ) if (title or fig.layout.title.text) else None,
-        xaxis=dict(
-            gridcolor="rgba(45, 58, 79, 0.5)",
-            linecolor="#2d3a4f",
-            tickfont=dict(color="#94a3b8"),
-        ),
-        yaxis=dict(
-            gridcolor="rgba(45, 58, 79, 0.5)",
-            linecolor="#2d3a4f",
-            tickfont=dict(color="#94a3b8"),
-        ),
-        legend=dict(font=dict(color="#94a3b8")),
-        margin=dict(l=20, r=20, t=50, b=20),
-    )
-    return fig
-
-
-def render_footer():
-    st.markdown(
-        """
-        <div class="app-footer">
-            This application is an educational MVP for analyzing historical
-            safety patterns. It is not a certified safety assessment system
-            and should not replace qualified safety professionals, site
-            procedures, inspections, risk assessments, or applicable regulations.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-# =========================================================
-# DATA PATH
-# =========================================================
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_DIR, "data", "incidents.csv")
-
+# ==============================================================================
+# PAGE CONFIGURATION
+# ==============================================================================
+
+st.set_page_config(
+    page_title="Construction Safety Intelligence",
+    page_icon="🦺",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# Initialize company CSV data stores
 ensure_company_data_stores()
 
+# ==============================================================================
+# SESSION STATE INITIALIZATION
+# ==============================================================================
 
-# =========================================================
-# LOAD DATA
-# =========================================================
+if "current_page" not in st.session_state:
+    st.session_state.current_page = "Overview"
+
+if "selected_project" not in st.session_state:
+    st.session_state.selected_project = "Metro Tower Expansion — Phase 2"
+
+if "last_prediction_result" not in st.session_state:
+    st.session_state.last_prediction_result = None
+
+# Filter state persistence for Records
+if "records_filter_reset" not in st.session_state:
+    st.session_state.records_filter_reset = 0
+
+# ==============================================================================
+# DATA LOADING HELPERS
+# ==============================================================================
+
+BASE_DIR = Path(__file__).resolve().parent
+DATA_PATH = BASE_DIR / "data" / "incidents.csv"
+
 
 @st.cache_data
-def load_incidents():
+def load_historical_incidents() -> pd.DataFrame:
+    """Load benchmark historical incident dataset."""
+    if not DATA_PATH.exists():
+        return pd.DataFrame()
     df = pd.read_csv(DATA_PATH)
-
-    # Convert date column to datetime
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-
+    if "date" in df.columns:
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
     return df
 
 
+def load_prediction_history() -> pd.DataFrame:
+    """Load company prediction history from data/prediction_history.csv."""
+    if not PREDICTION_HISTORY_PATH.exists():
+        return pd.DataFrame(columns=PREDICTION_HISTORY_COLUMNS)
+    try:
+        df = pd.read_csv(PREDICTION_HISTORY_PATH)
+        return df
+    except Exception:
+        return pd.DataFrame(columns=PREDICTION_HISTORY_COLUMNS)
+
+
+def load_actual_incident_records() -> pd.DataFrame:
+    """Load actual company incident records from data/incident_records.csv."""
+    if not INCIDENT_RECORDS_PATH.exists():
+        return pd.DataFrame(columns=INCIDENT_RECORD_COLUMNS)
+    try:
+        df = pd.read_csv(INCIDENT_RECORDS_PATH)
+        return df
+    except Exception:
+        return pd.DataFrame(columns=INCIDENT_RECORD_COLUMNS)
+
+
+def load_projects_data() -> pd.DataFrame:
+    """Load projects registry from data/projects.csv."""
+    if not PROJECTS_PATH.exists():
+        return pd.DataFrame()
+    try:
+        df = pd.read_csv(PROJECTS_PATH)
+        return df
+    except Exception:
+        return pd.DataFrame()
+
+
 try:
-    incidents = load_incidents()
-    data_loaded = True
-except Exception as e:
-    incidents = pd.DataFrame()
+    incidents_df = load_historical_incidents()
+    data_loaded = not incidents_df.empty
+    data_error = None
+except Exception as err:
+    incidents_df = pd.DataFrame()
     data_loaded = False
-    data_error = str(e)
+    data_error = str(err)
 
 
-# =========================================================
-# APP SHELL — HEADER & NAVIGATION
-# =========================================================
+# ==============================================================================
+# REUSABLE UI WIDGETS
+# ==============================================================================
 
-inject_global_css()
-render_hero()
-page = render_top_nav()
+def render_date_filter_control(key_prefix: str = "df") -> Tuple[str, Optional[date], Optional[date]]:
+    """Render a clean Mercury-styled date filter selector with optional custom range pickers."""
+    col_preset, col_custom = st.columns([1.2, 2.8])
+    with col_preset:
+        period = st.selectbox(
+            "Date Range Filter:",
+            ["All time", "Last 7 days", "Last 30 days", "This month", "Previous month", "Custom range"],
+            index=0,
+            key=f"{key_prefix}_period_select",
+        )
 
-if page == "Safety":
-    safety_view = st.radio(
-        "Safety workspace",
-        ["Preventive Actions", "Weekly Safety Brief"],
-        horizontal=True,
-        label_visibility="collapsed",
+    start_date = None
+    end_date = None
+    if period == "Custom range":
+        with col_custom:
+            c1, c2 = st.columns(2)
+            with c1:
+                start_date = st.date_input("Start Date", value=datetime.now(timezone.utc).date(), key=f"{key_prefix}_start")
+            with c2:
+                end_date = st.date_input("End Date", value=datetime.now(timezone.utc).date(), key=f"{key_prefix}_end")
+
+    return period, start_date, end_date
+
+
+# ==============================================================================
+# GLOBAL APPLICATION SHELL
+# ==============================================================================
+
+inject_mercury_css()
+render_global_header(current_project=st.session_state.selected_project)
+current_page = render_top_navigation()
+
+
+# ==============================================================================
+# 1. OVERVIEW
+# ==============================================================================
+
+if current_page == "Overview":
+    render_page_hero(
+        title="Construction Safety Intelligence",
+        subtitle="Real-time predictive risk analytics and historical safety benchmarking for jobsites.",
+        tagline="SAFETY INTELLIGENCE PLATFORM",
     )
-    page = safety_view
 
-
-# =========================================================
-# OVERVIEW
-# =========================================================
-
-if page == "Overview":
-
-    render_page_header(
-        "Construction Safety Intelligence",
-        "A clear separation between your site safety activity and the historical benchmark dataset.",
-    )
-
-    st.markdown(
-        '<span class="context-chip">Current project / site: not selected</span>',
-        unsafe_allow_html=True,
-    )
-
-    overview_view = st.radio(
-        "Data perspective",
+    overview_perspective = st.radio(
+        "Overview Perspective",
         ["Site Safety", "Historical Benchmark"],
         horizontal=True,
         label_visibility="collapsed",
+        key="overview_perspective_radio",
     )
 
-    if overview_view == "Site Safety":
-        render_section_title("Site Safety")
-        site_history = pd.read_csv(PREDICTION_HISTORY_PATH)
+    if overview_perspective == "Site Safety":
+        render_section_heading(
+            "Site Safety Operations",
+            "Company-specific safety assessments recorded at active construction sites.",
+        )
 
-        if site_history.empty:
+        site_history_raw = load_prediction_history()
+
+        if site_history_raw.empty:
             render_empty_state(
-                "No site activity recorded yet",
-                "Make a prediction in Risk Predictor to start building your site's safety history.",
-                "🦺",
+                title="No site activity recorded yet",
+                message=(
+                    "Run a risk assessment in Risk Predictor to begin building your site's "
+                    "safety intelligence and operational risk history."
+                ),
+                icon="🦺",
             )
         else:
-            high_critical = site_history["predicted_risk_level"].isin(
-                ["HIGH", "CRITICAL"]
-            )
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                render_metric_card("Assessments", len(site_history), "◈", "default")
-            with col2:
-                render_metric_card("High / Critical", int(high_critical.sum()), "⚠", "high")
-            with col3:
-                render_metric_card(
-                    "Critical", int((site_history["predicted_risk_level"] == "CRITICAL").sum()), "●", "critical"
+            # Date Filter Control
+            period, s_date, e_date = render_date_filter_control("ov_site")
+            site_history = filter_by_date_range(site_history_raw, period, s_date, e_date)
+
+            if site_history.empty:
+                render_empty_state(
+                    title="No assessments found for selected period",
+                    message="No site evaluations match the current date filter. Select 'All time' or widen the date range.",
+                    icon="📅",
                 )
-            with col4:
-                render_metric_card(
-                    "Average PPE", f"{site_history['ppe_compliance_pct'].mean():.1f}%", "🦺", "medium"
+            else:
+                kpis = calculate_site_kpis(site_history)
+
+                # Primary KPI row
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    render_metric_card(
+                        "Total Assessments",
+                        kpis["total_assessments"],
+                        subtitle="Recorded site evaluations",
+                        variant="accent",
+                    )
+                with col2:
+                    render_metric_card(
+                        "High / Critical Risks",
+                        kpis["high_critical_count"],
+                        subtitle=f"{kpis['high_critical_pct']:.1f}% of assessments",
+                        variant="high",
+                    )
+                with col3:
+                    render_metric_card(
+                        "Critical Alerts",
+                        kpis["critical_risk_count"],
+                        subtitle="Immediate stop-work hazard",
+                        variant="critical",
+                    )
+                with col4:
+                    render_metric_card(
+                        "Observed Avg PPE",
+                        f"{kpis['avg_ppe_compliance']:.1f}%",
+                        subtitle="Observed crew compliance",
+                        variant="medium",
+                    )
+
+                # Secondary KPI row
+                st.markdown("<div style='margin: 0.75rem 0;'></div>", unsafe_allow_html=True)
+                sc1, sc2, sc3, sc4 = st.columns(4)
+                with sc1:
+                    render_metric_card(
+                        "Average Risk Score",
+                        f"{kpis['avg_risk_score']:.1f} / 100",
+                        subtitle="Cohort average score",
+                        variant="default",
+                    )
+                with sc2:
+                    render_metric_card(
+                        "Model Confidence",
+                        f"{kpis['avg_confidence']:.1f}%",
+                        subtitle="Average classifier certainty",
+                        variant="default",
+                    )
+                with sc3:
+                    render_metric_card(
+                        "Primary Activity",
+                        kpis["most_assessed_activity"],
+                        subtitle="Most frequent assessment",
+                        variant="default",
+                    )
+                with sc4:
+                    render_metric_card(
+                        "Latest Assessment",
+                        kpis["latest_assessment_date"],
+                        subtitle="Most recent timestamp",
+                        variant="default",
+                    )
+
+                st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
+
+                # Visual charts
+                col_chart1, col_chart2 = st.columns(2)
+                with col_chart1:
+                    render_section_heading("Site Risk Distribution", "By predicted risk level")
+                    risk_counts_df = pd.DataFrame(
+                        {
+                            "Risk Level": list(kpis["risk_counts"].keys()),
+                            "Assessments": list(kpis["risk_counts"].values()),
+                        }
+                    )
+                    fig_site_risk = px.bar(
+                        risk_counts_df,
+                        x="Risk Level",
+                        y="Assessments",
+                        color="Risk Level",
+                        color_discrete_map=RISK_COLOR_DISCRETE_MAP,
+                        text="Assessments",
+                    )
+                    fig_site_risk.update_traces(textposition="outside")
+                    style_mercury_chart(fig_site_risk)
+                    st.plotly_chart(fig_site_risk, use_container_width=True)
+
+                with col_chart2:
+                    render_section_heading("Site Risk Score Timeline", "Risk evaluations over time")
+                    dt_series = safe_parse_datetime(site_history["timestamp"])
+                    valid_time_mask = dt_series.notna()
+                    if valid_time_mask.any() and "risk_score" in site_history.columns:
+                        timeline_df = site_history[valid_time_mask].copy()
+                        timeline_df["parsed_time"] = dt_series[valid_time_mask]
+                        timeline_df = timeline_df.sort_values("parsed_time")
+
+                        fig_trend = px.line(
+                            timeline_df,
+                            x="parsed_time",
+                            y="risk_score",
+                            markers=True,
+                            hover_data=["activity_type", "predicted_risk_level", "project/site"],
+                        )
+                        fig_trend.update_traces(
+                            line_color=COLOR_ACCENT_COBALT,
+                            marker_color=SAFETY_COLORS["HIGH"],
+                            marker_size=7,
+                        )
+                        fig_trend.update_layout(xaxis_title="Assessment Date & Time", yaxis_title="Risk Score (0-100)")
+                        style_mercury_chart(fig_trend)
+                        st.plotly_chart(fig_trend, use_container_width=True)
+                    else:
+                        st.info("Insufficient timestamp data to generate timeline trend.")
+
+                render_section_heading(
+                    "Recent Safety Assessments",
+                    "Latest jobsite risk evaluations logged from Risk Predictor.",
                 )
-
-            render_section_title("Recent Predictions")
-            st.dataframe(
-                site_history.tail(10).sort_values("timestamp", ascending=False),
-                use_container_width=True,
-                hide_index=True,
-            )
-
-        render_footer()
-        st.stop()
-
-    render_section_title("Historical Benchmark")
-    st.caption("Benchmark information from the historical incident dataset. It does not represent the current company or site.")
-
-    if not data_loaded:
-
-        st.error("Could not load the incident dataset.")
-
-        st.code(data_error)
+                display_cols = [
+                    "timestamp", "project/site", "activity_type", "location_type",
+                    "predicted_risk_level", "risk_score", "model_confidence", "ppe_compliance_pct", "description"
+                ]
+                avail_cols = [c for c in display_cols if c in site_history.columns]
+                display_df = site_history[avail_cols].tail(10).sort_values("timestamp", ascending=False)
+                st.dataframe(
+                    display_df,
+                    use_container_width=True,
+                    hide_index=True,
+                )
 
     else:
-
-        # -------------------------------------------------
-        # BASIC COUNTS
-        # -------------------------------------------------
-
-        total_incidents = len(incidents)
-
-        high_count = int(
-            (incidents["risk_level"] == "HIGH").sum()
+        render_section_heading(
+            "Historical Incident Benchmark",
+            "500-incident industry benchmark dataset. Used for reference and baseline training.",
         )
 
-        medium_count = int(
-            (incidents["risk_level"] == "MEDIUM").sum()
-        )
+        if not data_loaded:
+            st.error("Historical incident dataset could not be loaded.")
+            if data_error:
+                st.code(data_error)
+        else:
+            total_incidents = len(incidents_df)
+            crit_cnt = int((incidents_df["risk_level"] == "CRITICAL").sum())
+            high_cnt = int((incidents_df["risk_level"] == "HIGH").sum())
+            med_cnt = int((incidents_df["risk_level"] == "MEDIUM").sum())
+            low_cnt = int((incidents_df["risk_level"] == "LOW").sum())
 
-        low_count = int(
-            (incidents["risk_level"] == "LOW").sum()
-        )
+            kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+            with kpi1:
+                render_metric_card("Total Baseline", total_incidents, "Historical records", variant="accent")
+            with kpi2:
+                render_metric_card("Critical Risk", crit_cnt, f"{(crit_cnt / total_incidents * 100):.1f}% share", variant="critical")
+            with kpi3:
+                render_metric_card("High Risk", high_cnt, f"{(high_cnt / total_incidents * 100):.1f}% share", variant="high")
+            with kpi4:
+                render_metric_card("Medium Risk", med_cnt, f"{(med_cnt / total_incidents * 100):.1f}% share", variant="medium")
+            with kpi5:
+                render_metric_card("Low Risk", low_cnt, f"{(low_cnt / total_incidents * 100):.1f}% share", variant="low")
 
-        critical_count = int(
-            (incidents["risk_level"] == "CRITICAL").sum()
-        )
+            st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
 
-        # -------------------------------------------------
-        # KPI CARDS
-        # -------------------------------------------------
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                render_section_heading("Benchmark Risk Distribution", "Incidents by category")
+                b_risk_counts = (
+                    incidents_df["risk_level"]
+                    .value_counts()
+                    .reindex(["LOW", "MEDIUM", "HIGH", "CRITICAL"], fill_value=0)
+                    .reset_index()
+                )
+                b_risk_counts.columns = ["Risk Level", "Incidents"]
+                fig_b_risk = px.bar(
+                    b_risk_counts,
+                    x="Risk Level",
+                    y="Incidents",
+                    color="Risk Level",
+                    color_discrete_map=RISK_COLOR_DISCRETE_MAP,
+                    text="Incidents",
+                )
+                fig_b_risk.update_traces(textposition="outside")
+                style_mercury_chart(fig_b_risk)
+                st.plotly_chart(fig_b_risk, use_container_width=True)
 
-        col1, col2, col3, col4, col5 = st.columns(5)
+            with col_b2:
+                render_section_heading("Severity Breakdown", "Incident consequence severity")
+                sev_counts = incidents_df["severity"].value_counts().reset_index()
+                sev_counts.columns = ["Severity", "Incidents"]
+                fig_sev = px.pie(
+                    sev_counts,
+                    names="Severity",
+                    values="Incidents",
+                    hole=0.45,
+                    color_discrete_sequence=[
+                        SAFETY_COLORS["LOW"],
+                        SAFETY_COLORS["MEDIUM"],
+                        SAFETY_COLORS["HIGH"],
+                        SAFETY_COLORS["CRITICAL"],
+                        "#70707d",
+                    ],
+                )
+                style_mercury_chart(fig_sev)
+                st.plotly_chart(fig_sev, use_container_width=True)
 
-        with col1:
-            render_metric_card("Total Incidents", total_incidents, "📊", "default")
+            col_b3, col_b4 = st.columns(2)
+            with col_b3:
+                render_section_heading("Incidents by Construction Activity", "Historical frequency")
+                act_counts = incidents_df["activity_type"].value_counts().reset_index()
+                act_counts.columns = ["Activity", "Incidents"]
+                fig_act = px.bar(
+                    act_counts,
+                    x="Incidents",
+                    y="Activity",
+                    orientation="h",
+                    color="Incidents",
+                    color_continuous_scale=MONO_ACCENT_SCALE,
+                )
+                fig_act.update_layout(coloraxis_showscale=False)
+                style_mercury_chart(fig_act)
+                st.plotly_chart(fig_act, use_container_width=True)
 
-        with col2:
-            render_metric_card("Critical Risk", critical_count, "🔴", "critical")
-
-        with col3:
-            render_metric_card("High Risk", high_count, "🟠", "high")
-
-        with col4:
-            render_metric_card("Medium Risk", medium_count, "🔵", "medium")
-
-        with col5:
-            render_metric_card("Low Risk", low_count, "🟢", "low")
-
-        st.markdown("<div style='margin-top:1.5rem;'></div>", unsafe_allow_html=True)
-
-        # -------------------------------------------------
-        # RISK DISTRIBUTION
-        # -------------------------------------------------
-
-        render_section_title("Risk Level Distribution")
-
-        risk_counts = (
-            incidents["risk_level"]
-            .value_counts()
-            .reindex(
-                ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
-                fill_value=0
-            )
-            .reset_index()
-        )
-
-        risk_counts.columns = ["Risk Level", "Incidents"]
-
-        risk_color_map = {
-            "LOW": RISK_COLORS["LOW"],
-            "MEDIUM": RISK_COLORS["MEDIUM"],
-            "HIGH": RISK_COLORS["HIGH"],
-            "CRITICAL": RISK_COLORS["CRITICAL"],
-        }
-
-        fig_risk = px.bar(
-            risk_counts,
-            x="Risk Level",
-            y="Incidents",
-            title="Incidents by Risk Level",
-            text="Incidents",
-            color="Risk Level",
-            color_discrete_map=risk_color_map,
-        )
-
-        fig_risk.update_traces(
-            textposition="outside"
-        )
-
-        fig_risk.update_layout(
-            xaxis_title="Risk Level",
-            yaxis_title="Number of Incidents",
-            showlegend=False,
-        )
-
-        style_plotly_fig(fig_risk)
-        st.plotly_chart(
-            fig_risk,
-            use_container_width=True
-        )
-
-        # -------------------------------------------------
-        # TWO COLUMN CHART SECTION
-        # -------------------------------------------------
-
-        col1, col2 = st.columns(2)
-
-        # -------------------------------------------------
-        # ACTIVITY DISTRIBUTION
-        # -------------------------------------------------
-
-        with col1:
-
-            render_section_title("Incidents by Activity")
-
-            activity_counts = (
-                incidents["activity_type"]
-                .value_counts()
-                .reset_index()
-            )
-
-            activity_counts.columns = [
-                "Activity",
-                "Incidents"
-            ]
-
-            fig_activity = px.bar(
-                activity_counts,
-                x="Incidents",
-                y="Activity",
-                orientation="h",
-                title="Incidents by Construction Activity",
-                color="Incidents",
-                color_continuous_scale=["#1e3a5f", "#2563eb"],
-            )
-
-            fig_activity.update_layout(showlegend=False, coloraxis_showscale=False)
-            style_plotly_fig(fig_activity)
-            st.plotly_chart(
-                fig_activity,
-                use_container_width=True
-            )
-
-        # -------------------------------------------------
-        # SEVERITY DISTRIBUTION
-        # -------------------------------------------------
-
-        with col2:
-
-            render_section_title("Severity Distribution")
-
-            severity_counts = (
-                incidents["severity"]
-                .value_counts()
-                .reset_index()
-            )
-
-            severity_counts.columns = [
-                "Severity",
-                "Incidents"
-            ]
-
-            fig_severity = px.pie(
-                severity_counts,
-                names="Severity",
-                values="Incidents",
-                title="Incident Severity",
-                color_discrete_sequence=["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#64748b"],
-            )
-
-            style_plotly_fig(fig_severity)
-            st.plotly_chart(
-                fig_severity,
-                use_container_width=True
-            )
-
-        # -------------------------------------------------
-        # INCIDENT TREND
-        # -------------------------------------------------
-
-        render_section_title("Incident Trend Over Time")
-
-        daily_incidents = (
-            incidents
-            .dropna(subset=["date"])
-            .groupby("date")
-            .size()
-            .reset_index(name="Incidents")
-            .sort_values("date")
-        )
-
-        fig_trend = px.line(
-            daily_incidents,
-            x="date",
-            y="Incidents",
-            markers=True,
-            title="Daily Incident Count",
-        )
-
-        fig_trend.update_traces(line_color="#2563eb", marker_color="#3b82f6")
-        fig_trend.update_layout(
-            xaxis_title="Date",
-            yaxis_title="Incidents"
-        )
-
-        style_plotly_fig(fig_trend)
-        st.plotly_chart(
-            fig_trend,
-            use_container_width=True
-        )
-
-        # -------------------------------------------------
-        # HIGH-RISK ACTIVITIES
-        # -------------------------------------------------
-
-        render_section_title("High-Risk Activities")
-
-        high_risk_data = incidents[
-            incidents["risk_level"].isin(
-                ["HIGH", "CRITICAL"]
-            )
-        ]
-
-        high_risk_activity = (
-            high_risk_data["activity_type"]
-            .value_counts()
-            .reset_index()
-        )
-
-        high_risk_activity.columns = [
-            "Activity",
-            "High/Critical Incidents"
-        ]
-
-        fig_high_risk = px.bar(
-            high_risk_activity,
-            x="Activity",
-            y="High/Critical Incidents",
-            title="Activities with High or Critical Risk",
-            color="High/Critical Incidents",
-            color_continuous_scale=["#92400e", "#ef4444"],
-        )
-
-        fig_high_risk.update_layout(showlegend=False, coloraxis_showscale=False)
-        fig_high_risk.update_layout(
-            xaxis_title="Activity",
-            yaxis_title="High/Critical Incidents"
-        )
-
-        style_plotly_fig(fig_high_risk)
-        st.plotly_chart(
-            fig_high_risk,
-            use_container_width=True
-        )
-
-        # -------------------------------------------------
-        # MOST COMMON HIGH-RISK ACTIVITY
-        # -------------------------------------------------
-
-        if not high_risk_activity.empty:
-
-            top_activity = high_risk_activity.iloc[0]["Activity"]
-            top_activity_count = int(
-                high_risk_activity.iloc[0]["High/Critical Incidents"]
-            )
-
-            st.markdown(
-                f"""
-                <div class="insight-box">
-                    Most common high/critical-risk activity in this dataset:
-                    <strong>{top_activity}</strong> ({top_activity_count} incidents).
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            with col_b4:
+                render_section_heading("Daily Incident Timeline", "Historical event series")
+                daily_df = (
+                    incidents_df.dropna(subset=["date"])
+                    .groupby("date")
+                    .size()
+                    .reset_index(name="Incidents")
+                    .sort_values("date")
+                )
+                fig_time = px.line(
+                    daily_df,
+                    x="date",
+                    y="Incidents",
+                    markers=True,
+                )
+                fig_time.update_traces(
+                    line_color=COLOR_ACCENT_COBALT,
+                    marker_color=SAFETY_COLORS["MEDIUM"],
+                    marker_size=5,
+                )
+                style_mercury_chart(fig_time)
+                st.plotly_chart(fig_time, use_container_width=True)
 
 
-# =========================================================
-# RISK PREDICTOR PLACEHOLDER
-# =========================================================
+# ==============================================================================
+# 2. RISK PREDICTOR
+# ==============================================================================
 
-# =========================================================
-# RISK PREDICTOR
-# =========================================================
-
-elif page == "Risk Predictor":
-
-    render_page_header(
-        "🔎 Construction Risk Predictor",
-        "Enter planned construction activity details. The trained machine-learning model "
-        "will estimate risk level, score, confidence, and contributing factors.",
+elif current_page == "Risk Predictor":
+    render_page_hero(
+        title="Construction Risk Predictor",
+        subtitle="Evaluate planned construction tasks before execution using our trained risk model.",
+        tagline="PREDICTIVE HAZARD ENGINE",
     )
-
-    # -----------------------------------------------------
-    # Import prediction and recommendation modules
-    # -----------------------------------------------------
-
-    from src.predictor import predict
-    from src.data_storage import record_prediction
-    from src.recommendations import get_recommendations
-    from src.toolbox_talk import get_toolbox_topics
-
-    # -----------------------------------------------------
-    # Load available values from historical data
-    # -----------------------------------------------------
 
     if data_loaded:
-
-        activity_options = sorted(
-            incidents["activity_type"]
-            .dropna()
-            .unique()
-            .tolist()
-        )
-
-        location_options = sorted(
-            incidents["location_type"]
-            .dropna()
-            .unique()
-            .tolist()
-        )
-
-        weather_options = sorted(
-            incidents["weather"]
-            .dropna()
-            .unique()
-            .tolist()
-        )
-
-        shift_options = sorted(
-            incidents["shift"]
-            .dropna()
-            .unique()
-            .tolist()
-        )
-
+        activity_options = sorted(incidents_df["activity_type"].dropna().unique().tolist())
+        location_options = sorted(incidents_df["location_type"].dropna().unique().tolist())
+        weather_options = sorted(incidents_df["weather"].dropna().unique().tolist())
+        shift_options = sorted(incidents_df["shift"].dropna().unique().tolist())
     else:
-
         activity_options = [
-            "Working at Height",
-            "Lifting",
-            "Scaffolding",
-            "Excavation",
-            "Electrical Work",
-            "Material Handling",
-            "Welding",
-            "Confined Space",
-            "Vehicle Movement",
-            "Housekeeping"
+            "Working at Height", "Lifting", "Scaffolding", "Excavation",
+            "Electrical Work", "Material Handling", "Welding",
+            "Confined Space", "Vehicle Movement", "Housekeeping",
         ]
+        location_options = ["Roof", "Electrical Room", "Excavation Area", "Warehouse", "Loading Area"]
+        weather_options = ["Clear", "Rain", "Adverse"]
+        shift_options = ["Day", "Night"]
 
-        location_options = [
-            "Roof",
-            "Electrical Room",
-            "Excavation Area",
-            "Warehouse",
-            "Loading Area"
-        ]
+    st.markdown('<div class="cs-card">', unsafe_allow_html=True)
+    render_section_heading("Planned Activity Parameters", "Input task details for pre-work risk calculation")
 
-        weather_options = [
-            "Clear",
-            "Rain",
-            "Adverse"
-        ]
+    form_col1, form_col2 = st.columns(2)
 
-        shift_options = [
-            "Day",
-            "Night"
-        ]
+    with form_col1:
+        st.caption("1. ACTIVITY & LOCATION")
+        activity_type = st.selectbox("Activity Type", activity_options, index=0)
+        location_type = st.selectbox("Location Type", location_options, index=0)
 
-    # -----------------------------------------------------
-    # INPUT FORM
-    # -----------------------------------------------------
+        st.caption("2. ENVIRONMENTAL CONDITIONS")
+        weather = st.selectbox("Weather Condition", weather_options, index=0)
+        shift = st.selectbox("Operational Shift", shift_options, index=0)
 
-    render_section_title("Activity Details")
+    with form_col2:
+        st.caption("3. CREW DYNAMICS & COMPLIANCE")
+        crew_size = st.number_input("Crew Size (Workers)", min_value=1, max_value=120, value=6, step=1)
+        ppe_compliance_pct = st.slider("Observed PPE Compliance (%)", min_value=0, max_value=100, value=85, step=1)
+        previous_incidents_30d = st.number_input("Site Incidents in Last 30 Days", min_value=0, max_value=20, value=0, step=1)
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        st.caption("ACTIVITY DETAILS & SITE CONDITIONS")
-
-        activity_type = st.selectbox(
-            "Activity Type",
-            activity_options
+        st.caption("4. PROJECT CONTEXT & HAZARDS")
+        project_site = st.text_input(
+            "Project / Jobsite Name",
+            value=st.session_state.selected_project,
+            placeholder="e.g. Metro Tower — Level 14",
         )
-
-        location_type = st.selectbox(
-            "Location Type",
-            location_options
-        )
-
-        weather = st.selectbox(
-            "Weather",
-            weather_options
-        )
-
-        shift = st.selectbox(
-            "Shift",
-            shift_options
-        )
-
-    with col2:
-
-        st.caption("CREW, PPE & RECENT HISTORY")
-
-        ppe_compliance_pct = st.slider(
-            "PPE Compliance (%)",
-            min_value=0,
-            max_value=100,
-            value=85,
-            step=1
-        )
-
-        previous_incidents_30d = st.number_input(
-            "Previous Incidents in Last 30 Days",
-            min_value=0,
-            max_value=20,
-            value=0,
-            step=1
-        )
-
-        crew_size = st.number_input(
-            "Crew Size",
-            min_value=1,
-            max_value=100,
-            value=6,
-            step=1
-        )
-
-    render_section_title("Activity Description")
 
     description = st.text_area(
-        "Activity / Hazard Description",
+        "Hazard & Task Description",
         value="",
-        placeholder="Example: Unprotected edge observed during elevated work."
+        placeholder="e.g., Installing exterior curtain-wall panels on perimeter edge without temporary guardrails.",
+        height=80,
     )
 
-    project_site = st.text_input(
-        "Project / Site",
-        value="",
-        placeholder="Optional: project or site name"
-    )
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div style='margin:1rem 0;'></div>", unsafe_allow_html=True)
+    predict_btn = st.button("◈ Run Safety Risk Assessment", type="primary", use_container_width=True)
 
-    # -----------------------------------------------------
-    # PREDICT BUTTON
-    # -----------------------------------------------------
-
-    if st.button(
-        "🚨 Predict Risk",
-        type="primary",
-        use_container_width=True
-    ):
-
+    if predict_btn:
         activity_data = {
             "activity_type": activity_type,
             "location_type": location_type,
@@ -1208,1258 +559,1166 @@ elif page == "Risk Predictor":
             "ppe_compliance_pct": ppe_compliance_pct,
             "previous_incidents_30d": previous_incidents_30d,
             "crew_size": crew_size,
-            "description": description
+            "description": description,
         }
 
         try:
+            prediction_result = predict(activity_data, strict=True)
+            record_prediction(project_site, activity_data, prediction_result)
+            st.session_state.last_prediction_result = {
+                "activity_data": activity_data,
+                "result": prediction_result,
+                "project_site": project_site,
+            }
+        except Exception as pred_err:
+            st.error(f"Prediction could not be completed: {pred_err}")
 
-            result = predict(
-                activity_data,
-                strict=True
-            )
+    if st.session_state.last_prediction_result:
+        saved = st.session_state.last_prediction_result
+        res = saved["result"]
+        act_d = saved["activity_data"]
+        r_level = res["risk_level"]
+        r_score = res["risk_score"]
+        conf = res["confidence"]
+        conf_pct = conf * 100 if conf <= 1.0 else conf
 
-            record_prediction(
-                project_site,
-                activity_data,
-                result,
-            )
+        st.markdown(
+            f'<div class="cs-risk-assessment {r_level.lower()}">',
+            unsafe_allow_html=True,
+        )
 
-            # -------------------------------------------------
-            # RESULT
-            # -------------------------------------------------
+        render_section_heading("Risk Intelligence Assessment Result", f"Assessed for: {act_d['activity_type']} at {act_d['location_type']}")
 
-            st.markdown("<div style='margin-top:1.5rem;'></div>", unsafe_allow_html=True)
-            render_section_title("Prediction Result")
+        res_col1, res_col2, res_col3 = st.columns(3)
+        with res_col1:
+            render_metric_card("Predicted Risk Level", r_level, subtitle="Machine learning classification", variant=r_level.lower())
+        with res_col2:
+            render_metric_card("Risk Score", f"{r_score:.1f} / 100", subtitle="Probability-weighted risk index", variant=r_level.lower())
+        with res_col3:
+            render_metric_card("Model Confidence", f"{conf_pct:.1f}%", subtitle="Classifier certainty", variant="accent")
 
-            risk_level = result["risk_level"]
-            risk_score = result["risk_score"]
-            confidence = result["confidence"]
+        if r_level == "CRITICAL":
+            banner_msg = "CRITICAL RISK — Immediate intervention required. Work must NOT proceed until verified engineering controls and supervisor permits are issued."
+        elif r_level == "HIGH":
+            banner_msg = "HIGH RISK — Elevated hazard exposure. Rigorous control verification and active supervision required before starting task."
+        elif r_level == "MEDIUM":
+            banner_msg = "MEDIUM RISK — Standard operational hazards present. Verify routine safety controls and conduct pre-task briefing."
+        else:
+            banner_msg = "LOW RISK — Normal jobsite risk profile. Proceed with standard safety protocols and monitoring."
 
-            # -------------------------------------------------
-            # RESULT METRICS
-            # -------------------------------------------------
+        st.markdown(
+            f'<div class="cs-risk-banner {r_level.lower()}">{banner_msg}</div>',
+            unsafe_allow_html=True,
+        )
 
-            risk_color = RISK_COLORS.get(risk_level, "#f1f5f9")
+        st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
+        why_col, prob_col = st.columns([1.1, 0.9])
 
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-                render_result_metric("Risk Level", risk_level, risk_color)
-
-            with col2:
-                render_result_metric("Risk Score", f"{risk_score:.1f} / 100", risk_color)
-
-            with col3:
-
-                confidence_display = confidence
-
-                if confidence_display <= 1:
-                    confidence_display = confidence_display * 100
-
-                render_result_metric(
-                    "Model Confidence",
-                    f"{confidence_display:.1f}%",
-                    "#94a3b8",
-                )
-
-            # -------------------------------------------------
-            # RISK MESSAGE
-            # -------------------------------------------------
-
-            if risk_level == "CRITICAL":
-
-                render_risk_banner(
-                    risk_level,
-                    "⚠️ CRITICAL RISK — Immediate attention and "
-                    "appropriate safety controls are required before work.",
-                )
-
-            elif risk_level == "HIGH":
-
-                render_risk_banner(
-                    risk_level,
-                    "⚠️ HIGH RISK — Review hazards and verify "
-                    "preventive controls before starting work.",
-                )
-
-            elif risk_level == "MEDIUM":
-
-                render_risk_banner(
-                    risk_level,
-                    "MEDIUM RISK — Review the activity hazards "
-                    "and verify appropriate controls.",
-                )
-
+        with why_col:
+            render_section_heading("Why this risk?", "Key contributing factors from model weights")
+            top_factors = res.get("top_factors", [])
+            if top_factors:
+                for factor in top_factors:
+                    if isinstance(factor, dict):
+                        f_name = factor.get("label", "Factor")
+                        f_contrib = factor.get("contribution")
+                        f_dir = factor.get("direction", "contributes to risk")
+                        contrib_str = f"magnitude: {f_contrib:.4f}" if f_contrib is not None else ""
+                        st.markdown(
+                            f"""
+                            <div class="cs-factor-item">
+                                <div>
+                                    <span class="cs-factor-name">{f_name}</span>
+                                    <span style="color: {COLOR_TEXT_SECONDARY}; font-size: 0.82rem; margin-left: 0.4rem;">({f_dir})</span>
+                                </div>
+                                <span class="cs-factor-meta">{contrib_str}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.markdown(
+                            f'<div class="cs-factor-item"><span class="cs-factor-name">{factor}</span></div>',
+                            unsafe_allow_html=True,
+                        )
             else:
+                st.caption("No specific outlier factors identified for this profile.")
 
-                render_risk_banner(
-                    risk_level,
-                    "LOW RISK — Continue with normal safety controls "
-                    "and monitoring.",
-                )
-
-            # -------------------------------------------------
-            # PROBABILITIES
-            # -------------------------------------------------
-
-            render_section_title("Risk Probabilities")
-
-            probabilities = result.get(
-                "probabilities",
-                {}
-            )
-
-            if probabilities:
-
-                probability_df = pd.DataFrame(
+        with prob_col:
+            render_section_heading("Risk Probability Distribution", "Class probability breakdown")
+            probs = res.get("probabilities", {})
+            if probs:
+                prob_df = pd.DataFrame(
                     {
-                        "Risk Level": list(probabilities.keys()),
-                        "Probability (%)": [
-                            value * 100
-                            for value in probabilities.values()
-                        ]
+                        "Risk Level": list(probs.keys()),
+                        "Probability (%)": [v * 100 for v in probs.values()],
                     }
                 )
-
-                fig_probability = px.bar(
-                    probability_df,
+                fig_p = px.bar(
+                    prob_df,
                     x="Risk Level",
                     y="Probability (%)",
                     text="Probability (%)",
-                    title="Model Probability by Risk Level",
                     color="Risk Level",
-                    color_discrete_map=RISK_COLORS,
+                    color_discrete_map=RISK_COLOR_DISCRETE_MAP,
                 )
-
-                fig_probability.update_traces(
+                fig_p.update_traces(
                     texttemplate="%{text:.1f}%",
-                    textposition="outside"
+                    textposition="outside",
                 )
+                fig_p.update_layout(showlegend=False)
+                style_mercury_chart(fig_p, height=260)
+                st.plotly_chart(fig_p, use_container_width=True)
 
-                fig_probability.update_layout(showlegend=False)
-                style_plotly_fig(fig_probability)
-                st.plotly_chart(
-                    fig_probability,
-                    use_container_width=True
-                )
+        st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
+        rec_col, tool_col = st.columns(2)
 
-            # -------------------------------------------------
-            # CONTRIBUTING FACTORS
-            # -------------------------------------------------
-
-            render_section_title("🔍 Top Contributing Factors")
-
-            top_factors = result.get(
-                "top_factors",
-                []
-            )
-
-            if top_factors:
-
-                for factor in top_factors:
-
-                    if isinstance(factor, dict):
-
-                        name = factor.get(
-                            "label",
-                            "Factor"
-                        )
-
-                        contribution = factor.get(
-                            "contribution"
-                        )
-
-                        direction = factor.get(
-                            "direction",
-                            ""
-                        )
-
-                        if contribution is not None:
-
-                            st.markdown(
-                                f'<div class="list-item-factor">'
-                                f'<strong>{name}</strong> {direction} '
-                                f'(contribution: {contribution:.4f})'
-                                f'</div>',
-                                unsafe_allow_html=True,
-                            )
-
-                        else:
-
-                            st.markdown(
-                                f'<div class="list-item-factor">'
-                                f'<strong>{name}</strong> {direction}'
-                                f'</div>',
-                                unsafe_allow_html=True,
-                            )
-
-                    else:
-
-                        st.markdown(
-                            f'<div class="list-item-factor">• {factor}</div>',
-                            unsafe_allow_html=True,
-                        )
-
-            else:
-
+        with rec_col:
+            render_section_heading("Recommended Preventive Actions", f"Controls for {act_d['activity_type']}")
+            recs = get_recommendations(act_d["activity_type"])
+            for rec in recs:
                 st.markdown(
-                    '<div class="list-item">No major contributing factors were returned.</div>',
+                    f"""
+                    <div class="cs-action-item">
+                        <span class="cs-action-icon">✓</span>
+                        <span>{rec}</span>
+                    </div>
+                    """,
                     unsafe_allow_html=True,
                 )
 
-            # -------------------------------------------------
-            # RECOMMENDATIONS
-            # -------------------------------------------------
-
-            render_section_title("🛡️ Recommended Preventive Actions")
-
-            recommendations = get_recommendations(
-                activity_type
-            )
-
-            for recommendation in recommendations:
-
+        with tool_col:
+            render_section_heading("Targeted Toolbox Talk Briefing", "Recommended pre-shift discussion points")
+            topics = get_toolbox_topics(act_d["activity_type"])
+            for topic in topics:
                 st.markdown(
-                    f'<div class="recommendation-item">✅ {recommendation}</div>',
+                    f"""
+                    <div class="cs-action-item">
+                        <span class="cs-action-icon" style="color:{COLOR_ACCENT_COBALT};">🗣</span>
+                        <span>{topic}</span>
+                    </div>
+                    """,
                     unsafe_allow_html=True,
                 )
 
-            # -------------------------------------------------
-            # TOOLBOX TALK
-            # -------------------------------------------------
-
-            render_section_title("🗣️ Toolbox Talk Topics")
-
-            toolbox_topics = get_toolbox_topics(
-                activity_type
-            )
-
-            for topic in toolbox_topics:
-
-                st.markdown(
-                    f'<div class="toolbox-item">• {topic}</div>',
-                    unsafe_allow_html=True,
-                )
-
-        except Exception as e:
-
-            st.error(
-                "Prediction could not be completed."
-            )
-
-            st.exception(e)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
-# =========================================================
-# INCIDENT EXPLORER PLACEHOLDER
-# =========================================================
+# ==============================================================================
+# 3. ANALYTICS
+# ==============================================================================
 
-# =========================================================
-# INCIDENT EXPLORER
-# =========================================================
-
-elif page == "Records":
-
-    render_page_header(
-        "📋 Historical Incident Records",
-        "Explore the benchmark incident dataset by activity, severity, and risk level.",
+elif current_page == "Analytics":
+    render_page_hero(
+        title="Safety Risk Analytics",
+        subtitle="Multi-dimensional risk patterns across activities, environmental conditions, and compliance.",
+        tagline="INTELLIGENCE DASHBOARD",
     )
 
-    if not data_loaded:
-        st.error("Incident data could not be loaded.")
-    else:
+    analytics_perspective = st.radio(
+        "Analytics Perspective",
+        ["Site Analytics", "Historical Benchmark"],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="analytics_perspective_radio",
+    )
 
-        # -------------------------------------------------
-        # FILTERS
-        # -------------------------------------------------
-
-        render_section_title("Filter Incidents")
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-
-            risk_options = ["All"] + sorted(
-                incidents["risk_level"]
-                .dropna()
-                .unique()
-                .tolist()
+    if analytics_perspective == "Site Analytics":
+        site_history_raw = load_prediction_history()
+        if site_history_raw.empty:
+            render_empty_state(
+                title="No site analytics data available",
+                message="Site analytics are generated dynamically from your recorded predictions. Submit assessments in Risk Predictor to populate this dashboard.",
+                icon="▥",
             )
+        else:
+            # Reusable Date Filter Bar
+            period, s_date, e_date = render_date_filter_control("an_site")
+            site_history = filter_by_date_range(site_history_raw, period, s_date, e_date)
 
-            selected_risk = st.selectbox(
-                "Risk Level",
-                risk_options
-            )
-
-        with col2:
-
-            activity_options = ["All"] + sorted(
-                incidents["activity_type"]
-                .dropna()
-                .unique()
-                .tolist()
-            )
-
-            selected_activity = st.selectbox(
-                "Activity Type",
-                activity_options
-            )
-
-        with col3:
-
-            severity_options = ["All"] + sorted(
-                incidents["severity"]
-                .dropna()
-                .unique()
-                .tolist()
-            )
-
-            selected_severity = st.selectbox(
-                "Severity",
-                severity_options
-            )
-
-        search_text = st.text_input(
-            "Search incident description",
-            placeholder="Example: cable, fall, scaffold, excavation..."
-        )
-
-        # -------------------------------------------------
-        # APPLY FILTERS
-        # -------------------------------------------------
-
-        filtered = incidents.copy()
-
-        if selected_risk != "All":
-            filtered = filtered[
-                filtered["risk_level"] == selected_risk
-            ]
-
-        if selected_activity != "All":
-            filtered = filtered[
-                filtered["activity_type"] == selected_activity
-            ]
-
-        if selected_severity != "All":
-            filtered = filtered[
-                filtered["severity"] == selected_severity
-            ]
-
-        if search_text.strip():
-
-            filtered = filtered[
-                filtered["description"]
-                .fillna("")
-                .str.contains(
-                    search_text.strip(),
-                    case=False,
-                    na=False
+            if site_history.empty:
+                render_empty_state(
+                    title="No analytics for selected date period",
+                    message="No company predictions match the selected date range. Select 'All time' or widen your filter range.",
+                    icon="📅",
                 )
-            ]
+            else:
+                kpis = calculate_site_kpis(site_history)
 
-        # -------------------------------------------------
-        # RESULTS SUMMARY
-        # -------------------------------------------------
+                # KPI Summary Banner
+                render_section_heading("Site Safety Intelligence Summary", f"Analytics for {kpis['total_assessments']} recorded site evaluations")
+                k1, k2, k3, k4, k5 = st.columns(5)
+                with k1:
+                    render_metric_card("Assessments", kpis["total_assessments"], variant="accent")
+                with k2:
+                    render_metric_card("Avg Risk Score", f"{kpis['avg_risk_score']:.1f}", variant="default")
+                with k3:
+                    render_metric_card("High/Critical %", f"{kpis['high_critical_pct']:.1f}%", variant="high")
+                with k4:
+                    render_metric_card("Avg PPE %", f"{kpis['avg_ppe_compliance']:.1f}%", variant="medium")
+                with k5:
+                    render_metric_card("Confidence", f"{kpis['avg_confidence']:.1f}%", variant="default")
 
-        st.markdown("<div style='margin:1.25rem 0;'></div>", unsafe_allow_html=True)
+                st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
 
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            render_metric_card("Matching Incidents", len(filtered), "📋", "default")
-
-        with col2:
-
-            high_critical_count = len(
-                filtered[
-                    filtered["risk_level"].isin(
-                        ["HIGH", "CRITICAL"]
+                # Row 1: Distribution & Trend
+                col1, col2 = st.columns(2)
+                with col1:
+                    render_section_heading("Site Risk Distribution", "Breakdown by predicted risk class")
+                    risk_counts_df = pd.DataFrame(
+                        {
+                            "Risk Level": list(kpis["risk_counts"].keys()),
+                            "Assessments": list(kpis["risk_counts"].values()),
+                        }
                     )
-                ]
-            )
+                    fig_site_risk = px.bar(
+                        risk_counts_df,
+                        x="Risk Level",
+                        y="Assessments",
+                        color="Risk Level",
+                        color_discrete_map=RISK_COLOR_DISCRETE_MAP,
+                        text="Assessments",
+                    )
+                    fig_site_risk.update_traces(textposition="outside")
+                    style_mercury_chart(fig_site_risk)
+                    st.plotly_chart(fig_site_risk, use_container_width=True)
 
-            render_metric_card("High / Critical", high_critical_count, "⚠️", "high")
+                with col2:
+                    render_section_heading("Risk Score Timeline & Trend", "Evaluations across timeline")
+                    dt_series = safe_parse_datetime(site_history["timestamp"])
+                    valid_time = dt_series.notna()
+                    if valid_time.any() and "risk_score" in site_history.columns:
+                        trend_df = site_history[valid_time].copy()
+                        trend_df["parsed_time"] = dt_series[valid_time]
+                        trend_df = trend_df.sort_values("parsed_time")
 
-        with col3:
+                        fig_trend = px.line(
+                            trend_df,
+                            x="parsed_time",
+                            y="risk_score",
+                            markers=True,
+                            hover_data=["activity_type", "predicted_risk_level"],
+                        )
+                        fig_trend.update_traces(
+                            line_color=COLOR_ACCENT_COBALT,
+                            marker_color=SAFETY_COLORS["HIGH"],
+                            marker_size=6,
+                        )
+                        fig_trend.update_layout(xaxis_title="Date / Time", yaxis_title="Risk Score (0-100)")
+                        style_mercury_chart(fig_trend)
+                        st.plotly_chart(fig_trend, use_container_width=True)
+                    else:
+                        st.info("Insufficient timestamp records to plot trend.")
 
-            if len(filtered) > 0:
+                st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
 
-                high_critical_pct = (
-                    high_critical_count /
-                    len(filtered)
-                ) * 100
+                # Row 2: Activity Risk & PPE Analysis
+                col3, col4 = st.columns(2)
+                with col3:
+                    render_section_heading("Activity-Specific Risk Breakdown", "Risk metrics per construction task")
+                    act_metrics_df = calculate_activity_risk_metrics(site_history)
+                    if not act_metrics_df.empty:
+                        fig_act_risk = px.bar(
+                            act_metrics_df,
+                            x="Avg Risk Score",
+                            y="Activity",
+                            orientation="h",
+                            color="Avg Risk Score",
+                            color_continuous_scale=SAFETY_ALERT_SCALE,
+                            text="Avg Risk Score",
+                        )
+                        fig_act_risk.update_traces(textposition="outside")
+                        fig_act_risk.update_layout(coloraxis_showscale=False)
+                        style_mercury_chart(fig_act_risk)
+                        st.plotly_chart(fig_act_risk, use_container_width=True)
+                        st.dataframe(act_metrics_df, use_container_width=True, hide_index=True)
+                    else:
+                        st.info("No activity records available.")
 
-            else:
-                high_critical_pct = 0
+                with col4:
+                    render_section_heading("Observed PPE Compliance Analysis", "Observed relationship with evaluated risk")
+                    ppe_data = calculate_ppe_analysis(site_history)
+                    ppe_risk_df = ppe_data["avg_ppe_by_risk"]
+                    if not ppe_risk_df.empty:
+                        fig_ppe_risk = px.bar(
+                            ppe_risk_df,
+                            x="Risk Level",
+                            y="Avg PPE %",
+                            color="Risk Level",
+                            color_discrete_map=RISK_COLOR_DISCRETE_MAP,
+                            text="Avg PPE %",
+                        )
+                        fig_ppe_risk.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+                        fig_ppe_risk.update_layout(showlegend=False)
+                        style_mercury_chart(fig_ppe_risk)
+                        st.plotly_chart(fig_ppe_risk, use_container_width=True)
+                    else:
+                        st.info("No PPE compliance data available.")
 
-            render_metric_card(
-                "High / Critical %",
-                f"{high_critical_pct:.1f}%",
-                "📈",
-                "medium",
-            )
+                    st.caption("Note: Represents observed empirical relationship across jobsite evaluations. Correlation does not imply sole causation.")
 
-        st.markdown("<div style='margin:1.25rem 0;'></div>", unsafe_allow_html=True)
+                st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
 
-        # -------------------------------------------------
-        # INCIDENT TABLE
-        # -------------------------------------------------
+                # Row 3: Project / Site Comparison
+                render_section_heading("Project / Jobsite Comparison", "Safety metrics across registered sites")
+                proj_comp_df = calculate_project_comparison(site_history)
+                if not proj_comp_df.empty:
+                    if len(proj_comp_df) > 1:
+                        c_p1, c_p2 = st.columns([1.2, 0.8])
+                        with c_p1:
+                            fig_proj = px.bar(
+                                proj_comp_df,
+                                x="Project / Site",
+                                y="Assessments",
+                                color="Avg Risk Score",
+                                color_continuous_scale=SAFETY_ALERT_SCALE,
+                                text="Assessments",
+                            )
+                            fig_proj.update_traces(textposition="outside")
+                            fig_proj.update_layout(coloraxis_showscale=False)
+                            style_mercury_chart(fig_proj)
+                            st.plotly_chart(fig_proj, use_container_width=True)
+                        with c_p2:
+                            st.dataframe(proj_comp_df, use_container_width=True, hide_index=True)
+                    else:
+                        single_p = proj_comp_df.iloc[0]
+                        sp_col1, sp_col2, sp_col3, sp_col4 = st.columns(4)
+                        with sp_col1:
+                            render_metric_card("Active Project", single_p["Project / Site"], variant="accent")
+                        with sp_col2:
+                            render_metric_card("Site Assessments", single_p["Assessments"], variant="default")
+                        with sp_col3:
+                            render_metric_card("Site Avg Risk", f"{single_p['Avg Risk Score']:.1f}", variant="high" if single_p["Avg Risk Score"] >= 50 else "medium")
+                        with sp_col4:
+                            render_metric_card("Site Avg PPE", f"{single_p['Avg PPE %']:.1f}%", variant="medium")
 
-        render_section_title("Incident Records")
+    else:
+        render_section_heading("Historical Benchmark Risk Patterns", "500-record benchmark intelligence")
+        if not data_loaded:
+            st.error("Historical incident data is not loaded.")
+        else:
+            high_risk_df = incidents_df[
+                incidents_df["risk_level"].isin(["HIGH", "CRITICAL"])
+            ].copy()
 
-        display_columns = [
-            "incident_id",
-            "date",
-            "time",
-            "activity_type",
-            "location_type",
-            "description",
-            "severity",
-            "risk_level",
-            "weather",
-            "shift",
-            "ppe_compliance_pct",
-            "previous_incidents_30d",
-            "crew_size"
-        ]
-
-        available_columns = [
-            column
-            for column in display_columns
-            if column in filtered.columns
-        ]
-
-        st.dataframe(
-            filtered[available_columns].sort_values(
-                by="date",
-                ascending=False
-            ),
-            use_container_width=True,
-            hide_index=True
-        )
-
-        # -------------------------------------------------
-        # RISK DISTRIBUTION OF FILTERED DATA
-        # -------------------------------------------------
-
-        if len(filtered) > 0:
-
-            render_section_title("Filtered Risk Distribution")
-
-            risk_counts = (
-                filtered["risk_level"]
-                .value_counts()
-                .reindex(
-                    ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
-                    fill_value=0
+            col_a1, col_a2 = st.columns(2)
+            with col_a1:
+                render_section_heading("High-Risk Activity Patterns", "HIGH & CRITICAL incident volume")
+                act_counts = high_risk_df["activity_type"].value_counts().reset_index()
+                act_counts.columns = ["Activity", "High/Critical Incidents"]
+                fig_h_act = px.bar(
+                    act_counts,
+                    x="High/Critical Incidents",
+                    y="Activity",
+                    orientation="h",
+                    color="High/Critical Incidents",
+                    color_continuous_scale=SAFETY_ALERT_SCALE,
                 )
-                .reset_index()
+                fig_h_act.update_layout(coloraxis_showscale=False)
+                style_mercury_chart(fig_h_act)
+                st.plotly_chart(fig_h_act, use_container_width=True)
+
+            with col_a2:
+                render_section_heading("High-Risk Location Patterns", "Locations with elevated severe hazards")
+                loc_counts = high_risk_df["location_type"].value_counts().reset_index()
+                loc_counts.columns = ["Location", "High/Critical Incidents"]
+                fig_h_loc = px.bar(
+                    loc_counts,
+                    x="High/Critical Incidents",
+                    y="Location",
+                    orientation="h",
+                    color="High/Critical Incidents",
+                    color_continuous_scale=MONO_ACCENT_SCALE,
+                )
+                fig_h_loc.update_layout(coloraxis_showscale=False)
+                style_mercury_chart(fig_h_loc)
+                st.plotly_chart(fig_h_loc, use_container_width=True)
+
+            st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
+            col_a3, col_a4 = st.columns(2)
+
+            with col_a3:
+                render_section_heading("Weather vs Risk Level Matrix", "Cross-tabulated benchmark frequency")
+                weather_crosstab = pd.crosstab(
+                    incidents_df["weather"],
+                    incidents_df["risk_level"],
+                ).reindex(columns=["LOW", "MEDIUM", "HIGH", "CRITICAL"], fill_value=0)
+                st.dataframe(weather_crosstab, use_container_width=True)
+
+            with col_a4:
+                render_section_heading("PPE Compliance by Risk Level", "Observed historical average")
+                ppe_summary = (
+                    incidents_df.groupby("risk_level")["ppe_compliance_pct"]
+                    .mean()
+                    .reindex(["LOW", "MEDIUM", "HIGH", "CRITICAL"])
+                    .reset_index()
+                )
+                ppe_summary.columns = ["Risk Level", "Avg PPE Compliance (%)"]
+                fig_ppe_bar = px.bar(
+                    ppe_summary,
+                    x="Risk Level",
+                    y="Avg PPE Compliance (%)",
+                    color="Risk Level",
+                    color_discrete_map=RISK_COLOR_DISCRETE_MAP,
+                    text="Avg PPE Compliance (%)",
+                )
+                fig_ppe_bar.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+                fig_ppe_bar.update_layout(showlegend=False)
+                style_mercury_chart(fig_ppe_bar)
+                st.plotly_chart(fig_ppe_bar, use_container_width=True)
+
+
+# ==============================================================================
+# 4. RECORDS
+# ==============================================================================
+
+elif current_page == "Records":
+    render_page_hero(
+        title="Safety Data & Records",
+        subtitle="Search, filter, inspect, and audit company risk predictions and historical incident logs.",
+        tagline="DATA MANAGEMENT",
+    )
+
+    records_tab = st.radio(
+        "Records View",
+        ["Risk Predictions", "Actual Incidents"],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="records_tab_radio",
+    )
+
+    if records_tab == "Risk Predictions":
+        render_section_heading("Company Risk Predictions", "Logged assessments from data/prediction_history.csv")
+        pred_df = load_prediction_history()
+
+        if pred_df.empty:
+            render_empty_state(
+                title="No risk prediction records found",
+                message="Predictions created in the Risk Predictor workspace are saved to company records and will display here.",
+                icon="▤",
             )
-
-            risk_counts.columns = [
-                "Risk Level",
-                "Incidents"
-            ]
-
-            fig = px.bar(
-                risk_counts,
-                x="Risk Level",
-                y="Incidents",
-                text="Incidents",
-                title="Incidents by Risk Level",
-                color="Risk Level",
-                color_discrete_map=RISK_COLORS,
-            )
-
-            fig.update_traces(
-                textposition="outside"
-            )
-
-            fig.update_layout(showlegend=False)
-            style_plotly_fig(fig)
-            st.plotly_chart(
-                fig,
-                use_container_width=True
-            )
-
-
-# =========================================================
-# RISK PATTERNS PLACEHOLDER
-# =========================================================
-
-elif page == "Analytics":
-
-    render_page_header(
-        "📊 Historical Risk Analytics",
-        "Identify recurring patterns in historical benchmark incidents "
-        "to understand which activities and conditions are associated with higher risk.",
-    )
-
-    # Load incident data
-    incidents_path = os.path.join(BASE_DIR, "data", "incidents.csv")
-    incidents_df = pd.read_csv(incidents_path)
-
-    # ---------------------------------------------------------
-    # HIGH / CRITICAL INCIDENTS
-    # ---------------------------------------------------------
-
-    high_risk_df = incidents_df[
-        incidents_df["risk_level"].isin(["HIGH", "CRITICAL"])
-    ].copy()
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        render_section_title("High-Risk Activity Patterns")
-
-        activity_counts = (
-            high_risk_df["activity_type"]
-            .value_counts()
-            .sort_values(ascending=True)
-        )
-
-        activity_chart_df = activity_counts.reset_index()
-        activity_chart_df.columns = ["Activity", "Incidents"]
-
-        fig_activity = px.bar(
-            activity_chart_df,
-            x="Incidents",
-            y="Activity",
-            orientation="h",
-            title="HIGH / CRITICAL by Activity",
-            color="Incidents",
-            color_continuous_scale=["#92400e", "#ef4444"],
-        )
-        fig_activity.update_layout(showlegend=False, coloraxis_showscale=False)
-        style_plotly_fig(fig_activity)
-        st.plotly_chart(fig_activity, use_container_width=True)
-
-        st.caption(
-            "Activities with more HIGH or CRITICAL incidents may require "
-            "additional preventive controls."
-        )
-
-    with col2:
-
-        render_section_title("High-Risk Locations")
-
-        location_counts = (
-            high_risk_df["location_type"]
-            .value_counts()
-            .sort_values(ascending=True)
-        )
-
-        location_chart_df = location_counts.reset_index()
-        location_chart_df.columns = ["Location", "Incidents"]
-
-        fig_location = px.bar(
-            location_chart_df,
-            x="Incidents",
-            y="Location",
-            orientation="h",
-            title="HIGH / CRITICAL by Location",
-            color="Incidents",
-            color_continuous_scale=["#1e3a5f", "#f59e0b"],
-        )
-        fig_location.update_layout(showlegend=False, coloraxis_showscale=False)
-        style_plotly_fig(fig_location)
-        st.plotly_chart(fig_location, use_container_width=True)
-
-    # ---------------------------------------------------------
-    # WEATHER PATTERNS
-    # ---------------------------------------------------------
-
-    render_section_title("Risk by Weather Condition")
-
-    weather_table = pd.crosstab(
-        incidents_df["weather"],
-        incidents_df["risk_level"]
-    )
-
-    st.dataframe(
-        weather_table,
-        use_container_width=True
-    )
-
-    # ---------------------------------------------------------
-    # PPE COMPLIANCE
-    # ---------------------------------------------------------
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        render_section_title("PPE Compliance and Risk")
-
-        ppe_summary = (
-            incidents_df
-            .groupby("risk_level")["ppe_compliance_pct"]
-            .mean()
-            .reindex(["LOW", "MEDIUM", "HIGH", "CRITICAL"])
-        )
-
-        ppe_chart_df = ppe_summary.reset_index()
-        ppe_chart_df.columns = ["Risk Level", "Avg PPE %"]
-
-        fig_ppe = px.bar(
-            ppe_chart_df,
-            x="Risk Level",
-            y="Avg PPE %",
-            title="Average PPE Compliance by Risk Level",
-            color="Risk Level",
-            color_discrete_map=RISK_COLORS,
-        )
-        fig_ppe.update_layout(showlegend=False)
-        style_plotly_fig(fig_ppe)
-        st.plotly_chart(fig_ppe, use_container_width=True)
-
-        st.caption(
-            "Average PPE compliance percentage observed "
-            "for each historical risk level."
-        )
-
-    with col2:
-
-        render_section_title("🔎 Identified Safety Patterns")
-
-        top_activity = (
-            high_risk_df["activity_type"].value_counts().idxmax()
-            if not high_risk_df.empty
-            else "N/A"
-        )
-
-        top_location = (
-            high_risk_df["location_type"].value_counts().idxmax()
-            if not high_risk_df.empty
-            else "N/A"
-        )
-
-        adverse_high_risk = (
-            high_risk_df["weather"].eq("Adverse").sum()
-            if not high_risk_df.empty
-            else 0
-        )
-
-        st.markdown(
-            f"""
-            <div class="insight-box">
-                • <strong>{top_activity}</strong> is the activity with the most HIGH/CRITICAL incidents.<br><br>
-                • <strong>{top_location}</strong> is the location most frequently associated with HIGH/CRITICAL incidents.<br><br>
-                • <strong>{adverse_high_risk}</strong> HIGH/CRITICAL incidents occurred under adverse weather conditions.<br><br>
-                These patterns can be used to prioritize preventive safety measures.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-
-# =========================================================
-# FUTURE WORKSPACES (INTENTIONALLY NOT IMPLEMENTED YET)
-# =========================================================
-
-elif page == "Reports":
-
-    render_page_header(
-        "▧ Reports",
-        "A future workspace for formal safety reporting.",
-    )
-    render_empty_state(
-        "Reports are being prepared",
-        "No reports or exports have been generated in this application yet.",
-        "▧",
-    )
-
-
-elif page == "AI Safety":
-
-    render_page_header(
-        "✦ AI Safety",
-        "A future workspace for assisted safety intelligence.",
-    )
-    render_empty_state(
-        "AI Safety is not enabled",
-        "AI functionality is intentionally not part of this phase.",
-        "✦",
-    )
-
-
-elif page == "Projects":
-
-    render_page_header(
-        "▣ Projects",
-        "A future workspace for multi-project safety management.",
-    )
-    render_empty_state(
-        "Project management is being prepared",
-        "The project data foundation exists, but project management has not been implemented yet.",
-        "▣",
-    )
-
-
-# =========================================================
-# PREVENTIVE ACTIONS
-# =========================================================
-
-elif page == "Preventive Actions":
-
-    render_page_header(
-        "🛡️ Preventive Actions",
-        "Review recommended preventive safety controls based on the "
-        "construction activity and predicted risk level.",
-    )
-
-    # ---------------------------------------------------------
-    # INPUTS
-    # ---------------------------------------------------------
-
-    render_section_title("Activity & Risk Selection")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        selected_activity = st.selectbox(
-            "Construction Activity",
-            [
-                "Working at Height",
-                "Electrical Work",
-                "Excavation",
-                "Scaffolding",
-                "Welding",
-                "Lifting",
-                "Material Handling",
-                "Vehicle Movement",
-                "Confined Space",
-                "Housekeeping"
-            ]
-        )
-
-    with col2:
-        selected_risk = st.selectbox(
-            "Risk Level",
-            ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
-            index=2
-        )
-
-    st.markdown("<div style='margin:1rem 0;'></div>", unsafe_allow_html=True)
-
-    # ---------------------------------------------------------
-    # PREVENTIVE ACTION DATABASE
-    # ---------------------------------------------------------
-
-    preventive_actions = {
-
-        "Working at Height": [
-            "Verify fall protection controls before starting work.",
-            "Check edge protection and guardrails.",
-            "Inspect ladders, scaffolds, and access equipment.",
-            "Ensure workers use appropriate fall-arrest systems.",
-            "Conduct a pre-task safety briefing."
-        ],
-
-        "Electrical Work": [
-            "Inspect electrical cables and connections before work.",
-            "Verify isolation and lockout/tagout procedures.",
-            "Ensure electrical panels are properly secured.",
-            "Use appropriate electrical PPE.",
-            "Keep unauthorized personnel away from electrical work areas."
-        ],
-
-        "Excavation": [
-            "Inspect excavation edges before starting work.",
-            "Provide suitable shoring or protective systems where required.",
-            "Keep materials and equipment away from excavation edges.",
-            "Check for underground utilities before excavation.",
-            "Conduct regular excavation inspections."
-        ],
-
-        "Scaffolding": [
-            "Inspect scaffolding before use.",
-            "Verify guardrails and toe boards are installed.",
-            "Ensure the scaffold is properly supported and stable.",
-            "Prevent unauthorized modifications.",
-            "Use safe access and egress routes."
-        ],
-
-        "Welding": [
-            "Inspect welding equipment before use.",
-            "Remove combustible materials from the work area.",
-            "Use appropriate welding PPE.",
-            "Provide adequate ventilation.",
-            "Maintain suitable fire prevention controls."
-        ],
-
-        "Lifting": [
-            "Inspect lifting equipment before operation.",
-            "Verify load capacity and lifting plan.",
-            "Keep personnel away from suspended loads.",
-            "Use appropriate rigging and lifting accessories.",
-            "Conduct a pre-lift safety briefing."
-        ],
-
-        "Material Handling": [
-            "Inspect materials and handling equipment.",
-            "Use correct manual handling techniques.",
-            "Avoid overloading workers or equipment.",
-            "Keep pathways clear.",
-            "Use mechanical assistance for heavy loads where appropriate."
-        ],
-
-        "Vehicle Movement": [
-            "Separate pedestrians and moving vehicles.",
-            "Check vehicle condition before operation.",
-            "Use designated traffic routes.",
-            "Ensure adequate visibility and lighting.",
-            "Use trained and authorized vehicle operators."
-        ],
-
-        "Confined Space": [
-            "Verify confined-space entry requirements.",
-            "Test the atmosphere before entry.",
-            "Provide appropriate ventilation.",
-            "Maintain communication with workers inside.",
-            "Prepare an emergency rescue plan."
-        ],
-
-        "Housekeeping": [
-            "Keep work areas clean and organized.",
-            "Remove trip and slip hazards.",
-            "Store materials safely.",
-            "Maintain clear emergency access routes.",
-            "Conduct regular housekeeping inspections."
-        ]
-    }
-
-    # ---------------------------------------------------------
-    # RISK-BASED ADDITIONAL ACTIONS
-    # ---------------------------------------------------------
-
-    risk_actions = {
-
-        "LOW": [
-            "Follow standard site safety procedures.",
-            "Perform routine pre-task checks."
-        ],
-
-        "MEDIUM": [
-            "Review the task-specific risk assessment.",
-            "Conduct a pre-task safety briefing.",
-            "Increase supervision during the activity."
-        ],
-
-        "HIGH": [
-            "Review and approve the task-specific risk assessment.",
-            "Increase safety supervision.",
-            "Verify all critical safety controls before work.",
-            "Conduct a documented pre-task briefing."
-        ],
-
-        "CRITICAL": [
-            "Do not begin work until critical safety controls are verified.",
-            "Require supervisor or safety-officer review.",
-            "Conduct a detailed task-specific risk assessment.",
-            "Confirm emergency and rescue arrangements.",
-            "Document control verification before starting work."
-        ]
-    }
-
-    toolbox_topics = {
-
-        "Working at Height": [
-            "Fall protection",
-            "Edge protection",
-            "Safe scaffold and ladder access",
-            "Pre-use inspection of access equipment",
-            "Emergency response for elevated work"
-        ],
-
-        "Electrical Work": [
-            "Electrical isolation",
-            "Lockout/tagout",
-            "Electrical PPE",
-            "Cable and panel inspection",
-            "Emergency response to electrical incidents"
-        ],
-
-        "Excavation": [
-            "Excavation safety",
-            "Underground utility hazards",
-            "Edge protection",
-            "Safe access and egress",
-            "Emergency response"
-        ],
-
-        "Scaffolding": [
-            "Scaffold inspection",
-            "Guardrails and toe boards",
-            "Safe access",
-            "Load limits",
-            "Fall prevention"
-        ],
-
-        "Welding": [
-            "Fire prevention",
-            "Welding PPE",
-            "Ventilation",
-            "Hot-work controls",
-            "Emergency response"
-        ],
-
-        "Lifting": [
-            "Safe lifting practices",
-            "Rigging inspection",
-            "Suspended-load hazards",
-            "Communication during lifting",
-            "Emergency procedures"
-        ],
-
-        "Material Handling": [
-            "Manual handling",
-            "Safe lifting techniques",
-            "Material storage",
-            "Housekeeping",
-            "Use of mechanical assistance"
-        ],
-
-        "Vehicle Movement": [
-            "Pedestrian-vehicle separation",
-            "Traffic routes",
-            "Vehicle inspection",
-            "Blind spots",
-            "Safe vehicle operation"
-        ],
-
-        "Confined Space": [
-            "Atmospheric testing",
-            "Ventilation",
-            "Entry procedures",
-            "Communication",
-            "Emergency rescue"
-        ],
-
-        "Housekeeping": [
-            "Slip and trip prevention",
-            "Material storage",
-            "Clear access routes",
-            "Waste management",
-            "Routine inspections"
-        ]
-    }
-
-    # ---------------------------------------------------------
-    # DISPLAY ACTIVITY ACTIONS
-    # ---------------------------------------------------------
-
-    render_section_title("Recommended Preventive Controls")
-
-    actions = preventive_actions.get(
-        selected_activity,
-        []
-    )
-
-    for action in actions:
-        st.checkbox(action, value=False)
-
-    # ---------------------------------------------------------
-    # RISK-SPECIFIC ACTIONS
-    # ---------------------------------------------------------
-
-    render_section_title(
-        f"Additional Actions for {selected_risk} Risk"
-    )
-
-    for action in risk_actions[selected_risk]:
-        st.checkbox(action, value=False)
-
-    # ---------------------------------------------------------
-    # TOOLBOX TALK
-    # ---------------------------------------------------------
-
-    render_section_title("🗣️ Toolbox Talk Topics")
-
-    for topic in toolbox_topics[selected_activity]:
-        st.markdown(
-            f'<div class="toolbox-item">• {topic}</div>',
-            unsafe_allow_html=True,
-        )
-
-    # ---------------------------------------------------------
-    # RISK WARNING
-    # ---------------------------------------------------------
-
-    st.markdown("<div style='margin:1rem 0;'></div>", unsafe_allow_html=True)
-
-    if selected_risk == "CRITICAL":
-        render_risk_banner(
-            selected_risk,
-            "⚠️ CRITICAL RISK: Work should not begin until the required "
-            "safety controls have been verified by qualified personnel.",
-        )
-
-    elif selected_risk == "HIGH":
-        render_risk_banner(
-            selected_risk,
-            "⚠️ HIGH RISK: Verify task-specific controls and increase "
-            "safety supervision before starting work.",
-        )
-
-    elif selected_risk == "MEDIUM":
-        render_risk_banner(
-            selected_risk,
-            "ℹ️ MEDIUM RISK: Review the task risk assessment and "
-            "complete the recommended controls.",
-        )
-
-    else:
-        render_risk_banner(
-            selected_risk,
-            "✅ LOW RISK: Continue following standard site safety procedures.",
-        )
-
-
-# =========================================================
-# WEEKLY SAFETY BRIEF PLACEHOLDER
-# =========================================================
-
-elif page == "Weekly Safety Brief":
-
-    render_page_header(
-        "🗓️ Weekly Safety Brief",
-        "A quick safety briefing based on recent historical incident patterns. "
-        "Use this information to focus attention on recurring hazards.",
-    )
-
-    # ---------------------------------------------------------
-    # LOAD INCIDENT DATA
-    # ---------------------------------------------------------
-
-    incidents_path = os.path.join(BASE_DIR, "data", "incidents.csv")
-    incidents_df = pd.read_csv(incidents_path)
-
-    incidents_df["date"] = pd.to_datetime(incidents_df["date"])
-
-    # Use the latest 7 days available in the dataset
-    latest_date = incidents_df["date"].max()
-    start_date = latest_date - pd.Timedelta(days=6)
-
-    weekly_df = incidents_df[
-        (incidents_df["date"] >= start_date)
-        & (incidents_df["date"] <= latest_date)
-    ].copy()
-
-    # ---------------------------------------------------------
-    # SUMMARY
-    # ---------------------------------------------------------
-
-    render_section_title("Weekly Safety Summary")
-
-    total_incidents = len(weekly_df)
-
-    high_critical = weekly_df[
-        weekly_df["risk_level"].isin(["HIGH", "CRITICAL"])
-    ]
-
-    high_critical_count = len(high_critical)
-
-    critical_count = len(
-        weekly_df[weekly_df["risk_level"] == "CRITICAL"]
-    )
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        render_metric_card("Incidents", total_incidents, "📋", "default")
-
-    with col2:
-        render_metric_card("High / Critical", high_critical_count, "⚠️", "high")
-
-    with col3:
-        render_metric_card("Critical", critical_count, "🔴", "critical")
-
-    st.caption(
-        f"Period: {start_date.strftime('%d %b %Y')} "
-        f"to {latest_date.strftime('%d %b %Y')}"
-    )
-
-    st.markdown("<div style='margin:1.25rem 0;'></div>", unsafe_allow_html=True)
-
-    # ---------------------------------------------------------
-    # RISK DISTRIBUTION
-    # ---------------------------------------------------------
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        render_section_title("Risk Level Distribution")
-
-        risk_counts = (
-            weekly_df["risk_level"]
-            .value_counts()
-            .reindex(
-                ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
-                fill_value=0
-            )
-        )
-
-        risk_chart_df = risk_counts.reset_index()
-        risk_chart_df.columns = ["Risk Level", "Incidents"]
-
-        fig_weekly_risk = px.bar(
-            risk_chart_df,
-            x="Risk Level",
-            y="Incidents",
-            title="Weekly Risk Distribution",
-            color="Risk Level",
-            color_discrete_map=RISK_COLORS,
-        )
-        fig_weekly_risk.update_layout(showlegend=False)
-        style_plotly_fig(fig_weekly_risk)
-        st.plotly_chart(fig_weekly_risk, use_container_width=True)
-
-    with col2:
-
-        render_section_title("Weather Conditions")
-
-        if not weekly_df.empty:
-
-            weather_counts = weekly_df["weather"].value_counts().reset_index()
-            weather_counts.columns = ["Weather", "Incidents"]
-
-            fig_weather = px.bar(
-                weather_counts,
-                x="Weather",
-                y="Incidents",
-                title="Incidents by Weather",
-                color="Incidents",
-                color_continuous_scale=["#1e3a5f", "#3b82f6"],
-            )
-            fig_weather.update_layout(showlegend=False, coloraxis_showscale=False)
-            style_plotly_fig(fig_weather)
-            st.plotly_chart(fig_weather, use_container_width=True)
-
-    # ---------------------------------------------------------
-    # TOP ACTIVITIES
-    # ---------------------------------------------------------
-
-    render_section_title("Activities Requiring Attention")
-
-    if not high_critical.empty:
-
-        top_activities = (
-            high_critical["activity_type"]
-            .value_counts()
-            .head(5)
-        )
-
-        st.dataframe(
-            top_activities.rename("HIGH/CRITICAL incidents"),
-            use_container_width=True
-        )
-
-    else:
-
-        render_risk_banner(
-            "LOW",
-            "No HIGH or CRITICAL incidents were found in this period.",
-        )
-
-    # ---------------------------------------------------------
-    # COMMON HAZARDS
-    # ---------------------------------------------------------
-
-    render_section_title("Common Incident Descriptions")
-
-    if not high_critical.empty:
-
-        descriptions = (
-            high_critical["description"]
-            .value_counts()
-            .head(5)
-        )
-
-        for description, count in descriptions.items():
-
+        else:
+            # Multi-Filter Panel
+            st.markdown('<div class="cs-card-flat">', unsafe_allow_html=True)
+            st.caption("FILTER ASSESSMENTS")
+
+            rf_r = st.session_state.records_filter_reset
+
+            col_f1, col_f2, col_f3, col_f4 = st.columns(4)
+            with col_f1:
+                period_filter = st.selectbox(
+                    "Date Range Preset",
+                    ["All time", "Last 7 days", "Last 30 days", "This month", "Previous month", "Custom range"],
+                    index=0,
+                    key=f"rec_p_period_{rf_r}",
+                )
+            with col_f2:
+                proj_opts = ["All"] + sorted([p for p in pred_df["project/site"].dropna().unique().tolist() if str(p).strip()])
+                sel_proj = st.selectbox("Project / Site", proj_opts, index=0, key=f"rec_p_proj_{rf_r}")
+            with col_f3:
+                act_opts = ["All"] + sorted(pred_df["activity_type"].dropna().unique().tolist())
+                sel_act = st.selectbox("Activity Type", act_opts, index=0, key=f"rec_p_act_{rf_r}")
+            with col_f4:
+                risk_opts = ["All", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
+                sel_risk = st.selectbox("Risk Level", risk_opts, index=0, key=f"rec_p_risk_{rf_r}")
+
+            col_f5, col_f6, col_f7, col_f8 = st.columns(4)
+            with col_f5:
+                loc_opts = ["All"] + sorted(pred_df["location_type"].dropna().unique().tolist()) if "location_type" in pred_df.columns else ["All"]
+                sel_loc = st.selectbox("Location Type", loc_opts, index=0, key=f"rec_p_loc_{rf_r}")
+            with col_f6:
+                w_opts = ["All"] + sorted(pred_df["weather"].dropna().unique().tolist()) if "weather" in pred_df.columns else ["All"]
+                sel_w = st.selectbox("Weather", w_opts, index=0, key=f"rec_p_w_{rf_r}")
+            with col_f7:
+                sh_opts = ["All"] + sorted(pred_df["shift"].dropna().unique().tolist()) if "shift" in pred_df.columns else ["All"]
+                sel_sh = st.selectbox("Shift", sh_opts, index=0, key=f"rec_p_sh_{rf_r}")
+            with col_f8:
+                sort_choice = st.selectbox(
+                    "Sort By",
+                    [
+                        "Timestamp (Newest first)",
+                        "Timestamp (Oldest first)",
+                        "Risk Score (High to Low)",
+                        "Risk Score (Low to High)",
+                        "PPE Compliance (High to Low)",
+                    ],
+                    index=0,
+                    key=f"rec_p_sort_{rf_r}",
+                )
+
+            custom_s = None
+            custom_e = None
+            if period_filter == "Custom range":
+                c_c1, c_c2 = st.columns(2)
+                with c_c1:
+                    custom_s = st.date_input("Start Date", value=datetime.now(timezone.utc).date(), key=f"rec_p_cs_{rf_r}")
+                with c_c2:
+                    custom_e = st.date_input("End Date", value=datetime.now(timezone.utc).date(), key=f"rec_p_ce_{rf_r}")
+
+            col_s1, col_s2 = st.columns([3.5, 0.5])
+            with col_s1:
+                search_query = st.text_input(
+                    "Search Task / Hazard Description",
+                    placeholder="Search by keywords, description, or project name...",
+                    key=f"rec_p_search_{rf_r}",
+                )
+            with col_s2:
+                st.markdown("<div style='margin-top: 1.85rem;'></div>", unsafe_allow_html=True)
+                if st.button("Reset", key="rec_p_reset_btn", use_container_width=True):
+                    st.session_state.records_filter_reset += 1
+                    st.rerun()
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            # Apply Filters
+            filtered_pred = pred_df.copy()
+            filtered_pred = filter_by_date_range(filtered_pred, period_filter, custom_s, custom_e)
+
+            if sel_proj != "All":
+                filtered_pred = filtered_pred[filtered_pred["project/site"] == sel_proj]
+            if sel_act != "All":
+                filtered_pred = filtered_pred[filtered_pred["activity_type"] == sel_act]
+            if sel_risk != "All":
+                filtered_pred = filtered_pred[filtered_pred["predicted_risk_level"] == sel_risk]
+            if sel_loc != "All" and "location_type" in filtered_pred.columns:
+                filtered_pred = filtered_pred[filtered_pred["location_type"] == sel_loc]
+            if sel_w != "All" and "weather" in filtered_pred.columns:
+                filtered_pred = filtered_pred[filtered_pred["weather"] == sel_w]
+            if sel_sh != "All" and "shift" in filtered_pred.columns:
+                filtered_pred = filtered_pred[filtered_pred["shift"] == sel_sh]
+
+            if search_query.strip():
+                q = search_query.strip().lower()
+                filtered_pred = filtered_pred[
+                    filtered_pred["description"].fillna("").str.lower().str.contains(q)
+                    | filtered_pred["project/site"].fillna("").str.lower().str.contains(q)
+                    | filtered_pred["activity_type"].fillna("").str.lower().str.contains(q)
+                ]
+
+            # Apply Sorting
+            if sort_choice == "Timestamp (Newest first)":
+                filtered_pred = filtered_pred.sort_values("timestamp", ascending=False)
+            elif sort_choice == "Timestamp (Oldest first)":
+                filtered_pred = filtered_pred.sort_values("timestamp", ascending=True)
+            elif sort_choice == "Risk Score (High to Low)":
+                filtered_pred = filtered_pred.sort_values("risk_score", ascending=False)
+            elif sort_choice == "Risk Score (Low to High)":
+                filtered_pred = filtered_pred.sort_values("risk_score", ascending=True)
+            elif sort_choice == "PPE Compliance (High to Low)":
+                filtered_pred = filtered_pred.sort_values("ppe_compliance_pct", ascending=False)
+
+            # Record metrics & count badge
+            kpis_f = calculate_site_kpis(filtered_pred)
             st.markdown(
-                f'<div class="list-item"><strong>{description}</strong> — {count} incident(s)</div>',
+                f"""
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                    <span class="cs-chip active">Showing {len(filtered_pred)} of {len(pred_df)} assessments</span>
+                </div>
+                """,
                 unsafe_allow_html=True,
             )
 
-    # ---------------------------------------------------------
-    # PPE
-    # ---------------------------------------------------------
+            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+            with col_m1:
+                render_metric_card("Matching Assessments", len(filtered_pred), variant="accent")
+            with col_m2:
+                render_metric_card("High / Critical Count", kpis_f["high_critical_count"], variant="high")
+            with col_m3:
+                render_metric_card("Avg Risk Score", f"{kpis_f['avg_risk_score']:.1f}", variant="default")
+            with col_m4:
+                render_metric_card("Avg PPE Compliance", f"{kpis_f['avg_ppe_compliance']:.1f}%", variant="medium")
 
-    render_section_title("Average PPE Compliance")
+            # Data Table
+            st.dataframe(
+                filtered_pred,
+                use_container_width=True,
+                hide_index=True,
+            )
 
-    if not weekly_df.empty:
+            # Detailed Row Inspector
+            if not filtered_pred.empty:
+                st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
+                with st.expander("🔍 Inspect Specific Assessment Details", expanded=False):
+                    row_labels = [
+                        f"#{idx+1} — {row['activity_type']} ({row.get('predicted_risk_level', 'N/A')}) at {row.get('project/site', 'Unassigned')} [{str(row.get('timestamp', ''))[:19]}]"
+                        for idx, row in filtered_pred.reset_index().iterrows()
+                    ]
+                    selected_idx = st.selectbox(
+                        "Select an assessment record to inspect:",
+                        range(len(row_labels)),
+                        format_func=lambda i: row_labels[i],
+                    )
 
-        avg_ppe = weekly_df["ppe_compliance_pct"].mean()
+                    chosen = filtered_pred.iloc[selected_idx]
+                    c_risk = str(chosen.get("predicted_risk_level", "LOW")).upper()
+                    c_score = float(chosen.get("risk_score", 0.0))
+                    c_conf = float(chosen.get("model_confidence", 0.0))
+                    c_conf_pct = c_conf * 100 if c_conf <= 1.0 else c_conf
 
-        render_metric_card(
-            "Average PPE Compliance",
-            f"{avg_ppe:.1f}%",
-            "🦺",
-            "neutral",
-        )
+                    st.markdown(
+                        f"""
+                        <div class="cs-card-flat" style="border-left: 4px solid {SAFETY_COLORS.get(c_risk, '#5266eb')};">
+                            <div class="cs-card-header">
+                                <div>
+                                    <strong style="color: #ededf3; font-size: 1.1rem;">{chosen.get('activity_type', 'Activity')}</strong>
+                                    <span class="cs-badge cs-badge-{c_risk.lower()}" style="margin-left: 0.6rem;">{c_risk} RISK</span>
+                                </div>
+                                <span style="font-family: monospace; font-size: 0.82rem; color: #c3c3cc;">{chosen.get('timestamp', '')}</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 1rem 0; font-size: 0.88rem; color: #c3c3cc;">
+                                <div>🏢 Project / Site: <strong style="color: #ededf3;">{chosen.get('project/site', 'Unspecified')}</strong></div>
+                                <div>📍 Location: <strong style="color: #ededf3;">{chosen.get('location_type', 'N/A')}</strong></div>
+                                <div>🌤 Weather: <strong style="color: #ededf3;">{chosen.get('weather', 'N/A')}</strong></div>
+                                <div>⏱ Shift: <strong style="color: #ededf3;">{chosen.get('shift', 'N/A')}</strong></div>
+                                <div>👥 Crew Size: <strong style="color: #ededf3;">{chosen.get('crew_size', 'N/A')} workers</strong></div>
+                                <div>🦺 PPE Compliance: <strong style="color: #ededf3;">{chosen.get('ppe_compliance_pct', 'N/A')}%</strong></div>
+                                <div>⚠️ 30-Day Incidents: <strong style="color: #ededf3;">{chosen.get('previous_incidents_30d', '0')}</strong></div>
+                                <div>◈ Risk Score: <strong style="color: #ededf3;">{c_score:.1f} / 100</strong></div>
+                                <div>✦ Model Confidence: <strong style="color: #ededf3;">{c_conf_pct:.1f}%</strong></div>
+                            </div>
+                            <div style="background: #272735; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.88rem; margin-top: 0.5rem;">
+                                <span style="color: #8e8e9c; font-size: 0.78rem; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Task / Hazard Description</span>
+                                <span style="color: #ededf3;">{chosen.get('description', 'No specific description logged.') or 'No specific description logged.'}</span>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
-    # ---------------------------------------------------------
-    # SAFETY BRIEF
-    # ---------------------------------------------------------
+                    # Recommendations for selected row
+                    act_name = str(chosen.get("activity_type", ""))
+                    if act_name:
+                        st.markdown("<div style='margin-top: 0.75rem;'></div>", unsafe_allow_html=True)
+                        st.caption(f"PREVENTIVE ACTIONS FOR {act_name.upper()}")
+                        rec_list = get_recommendations(act_name)
+                        for r_item in rec_list:
+                            st.markdown(f"✓ **{r_item}**")
 
-    render_section_title("📢 Safety Brief")
+            csv_data = filtered_pred.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="⬇ Export Filtered Predictions (CSV)",
+                data=csv_data,
+                file_name="site_prediction_history.csv",
+                mime="text/csv",
+                type="secondary",
+            )
 
-    if high_critical_count > 0:
-
-        top_activity = (
-            high_critical["activity_type"]
-            .value_counts()
-            .idxmax()
-        )
-
-        render_risk_banner(
-            "HIGH",
-            f"During this period, {high_critical_count} HIGH/CRITICAL "
-            f"incident(s) were recorded. "
-            f"The activity requiring the most attention was "
-            f"{top_activity}.",
-        )
-
+    else:
+        render_section_heading("Actual Jobsite Incident Records", "Company incident log from data/incident_records.csv")
         st.markdown(
             """
-            <div class="section-card">
-                <div class="section-title-sm">Before starting work:</div>
-                <div class="list-item">Review the task-specific risk assessment.</div>
-                <div class="list-item">Verify required PPE and safety controls.</div>
-                <div class="list-item">Conduct a pre-task toolbox talk.</div>
-                <div class="list-item">Check work-area conditions.</div>
-                <div class="list-item">Ensure workers understand emergency procedures.</div>
+            <div class="cs-card-flat" style="border-left: 3px solid #3b82f6;">
+                <div style="font-weight: 600; color: #ededf3; margin-bottom: 0.25rem;">
+                    ℹ️ ACTUAL INCIDENTS vs RISK PREDICTIONS
+                </div>
+                <div style="color: #c3c3cc; font-size: 0.88rem; line-height: 1.5;">
+                    Actual incident records represent logged safety events, injuries, and near-miss occurrences on site.
+                    They are tracked separately from pre-task predictive evaluations and do not alter benchmark models.
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    else:
+        inc_records_df = load_actual_incident_records()
 
-        render_risk_banner(
-            "LOW",
-            "No HIGH or CRITICAL incidents were recorded during "
-            "the selected weekly period.",
+        if inc_records_df.empty:
+            render_empty_state(
+                title="No actual incident records logged yet",
+                message="No workplace incidents or near-misses have been recorded in data/incident_records.csv.",
+                icon="🛡",
+            )
+        else:
+            st.dataframe(
+                inc_records_df,
+                use_container_width=True,
+                hide_index=True,
+            )
+
+            csv_inc = inc_records_df.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="⬇ Export Incident Records (CSV)",
+                data=csv_inc,
+                file_name="actual_incident_records.csv",
+                mime="text/csv",
+                type="secondary",
+            )
+
+        # Log new incident modal/form
+        with st.expander("➕ Log New Actual Incident / Near-Miss Record"):
+            with st.form("log_incident_form"):
+                i_col1, i_col2 = st.columns(2)
+                with i_col1:
+                    inc_date = st.date_input("Date of Incident", value=datetime.now(timezone.utc).date())
+                    inc_proj = st.text_input("Project / Site", value=st.session_state.selected_project)
+                    inc_loc = st.text_input("Specific Location", placeholder="e.g. South Scaffold Tower — Level 4")
+                    inc_type = st.selectbox("Incident Type", ["Near Miss", "First Aid", "Medical Treatment", "Lost Time Injury", "Property Damage", "Unsafe Condition"])
+                with i_col2:
+                    inc_sev = st.selectbox("Severity", ["Minor", "Moderate", "Severe", "Critical"])
+                    inc_injury = st.text_input("Injury Description (if any)", placeholder="e.g. Minor hand laceration")
+                    inc_status = st.selectbox("Status", ["Open", "Under Investigation", "Corrective Action Assigned", "Closed"])
+
+                inc_desc = st.text_area("Incident Description & Sequence of Events")
+                inc_cause = st.text_input("Apparent Root Cause")
+                inc_action = st.text_input("Immediate Corrective Action Taken")
+
+                submit_inc = st.form_submit_button("Log Incident Record", type="primary")
+
+                if submit_inc and inc_desc.strip():
+                    try:
+                        new_inc_row = {
+                            "incident_id": f"INC-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                            "date": str(inc_date),
+                            "project/site": inc_proj.strip() or "Unspecified",
+                            "location": inc_loc.strip() or "Unspecified",
+                            "incident_type": inc_type,
+                            "severity": inc_sev,
+                            "description": inc_desc.strip(),
+                            "injury": inc_injury.strip() or "None",
+                            "root_cause": inc_cause.strip() or "Under review",
+                            "corrective_action": inc_action.strip() or "Pending",
+                            "status": inc_status,
+                        }
+                        inc_df_to_save = pd.DataFrame([new_inc_row])
+                        header = not INCIDENT_RECORDS_PATH.exists() or os.path.getsize(INCIDENT_RECORDS_PATH) == 0
+                        inc_df_to_save.to_csv(INCIDENT_RECORDS_PATH, mode="a", header=header, index=False)
+                        st.success(f"Incident record '{new_inc_row['incident_id']}' logged successfully.")
+                        st.rerun()
+                    except Exception as inc_err:
+                        st.error(f"Error logging incident: {inc_err}")
+
+
+# ==============================================================================
+# 5. REPORTS
+# ==============================================================================
+
+elif current_page == "Reports":
+    render_page_hero(
+        title="Safety Reports & Briefings",
+        subtitle="Generate structured periodic safety reports, compliance briefings, and audit exports.",
+        tagline="REPORT CENTER",
+    )
+
+    report_tabs = st.tabs(["Weekly Safety Brief", "Monthly Summary", "Custom Date Range", "Safety Alerts", "Exports"])
+
+    with report_tabs[0]:
+        render_section_heading("Weekly Safety Briefing", "Operational safety overview for toolbox meetings")
+        if data_loaded:
+            incidents_df["date"] = pd.to_datetime(incidents_df["date"])
+            latest_date = incidents_df["date"].max()
+            start_date = latest_date - pd.Timedelta(days=6)
+            weekly_df = incidents_df[
+                (incidents_df["date"] >= start_date) & (incidents_df["date"] <= latest_date)
+            ].copy()
+
+            tot_w = len(weekly_df)
+            hc_w = len(weekly_df[weekly_df["risk_level"].isin(["HIGH", "CRITICAL"])])
+            crit_w = len(weekly_df[weekly_df["risk_level"] == "CRITICAL"])
+            avg_ppe_w = weekly_df["ppe_compliance_pct"].mean() if not weekly_df.empty else 0.0
+
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                render_metric_card("Weekly Incidents", tot_w, f"{start_date.strftime('%d %b')} – {latest_date.strftime('%d %b')}", variant="accent")
+            with c2:
+                render_metric_card("High / Critical", hc_w, "Requires pre-task focus", variant="high")
+            with c3:
+                render_metric_card("Critical Risks", crit_w, "Immediate stop-work hazard", variant="critical")
+            with c4:
+                render_metric_card("Average PPE", f"{avg_ppe_w:.1f}%", "Observed weekly average", variant="medium")
+
+            st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
+            w_col1, w_col2 = st.columns(2)
+            with w_col1:
+                render_section_heading("Weekly Risk Distribution", "By risk severity")
+                w_risk_counts = (
+                    weekly_df["risk_level"]
+                    .value_counts()
+                    .reindex(["LOW", "MEDIUM", "HIGH", "CRITICAL"], fill_value=0)
+                    .reset_index()
+                )
+                w_risk_counts.columns = ["Risk Level", "Incidents"]
+                fig_w = px.bar(
+                    w_risk_counts,
+                    x="Risk Level",
+                    y="Incidents",
+                    color="Risk Level",
+                    color_discrete_map=RISK_COLOR_DISCRETE_MAP,
+                )
+                fig_w.update_layout(showlegend=False)
+                style_mercury_chart(fig_w, height=260)
+                st.plotly_chart(fig_w, use_container_width=True)
+
+            with w_col2:
+                render_section_heading("Priority Activities for Briefing", "Activities with most frequent hazards")
+                top_w_act = weekly_df["activity_type"].value_counts().head(5).reset_index()
+                top_w_act.columns = ["Activity", "Events"]
+                st.dataframe(top_w_act, use_container_width=True, hide_index=True)
+
+            st.markdown(
+                """
+                <div class="cs-card-flat">
+                    <div class="cs-card-header">Weekly Safety Briefing Notes</div>
+                    <p style="color: #ededf3; font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.5rem;">
+                        <strong>Focus Areas:</strong> Prioritize fall-arrest checks for elevated roof work and inspect all electrical
+                        junction enclosures prior to morning shift startup. Verify that all subcontract crews complete daily
+                        pre-task risk discussions.
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    with report_tabs[1]:
+        render_section_heading("Monthly Safety Summary", "Aggregated monthly performance metrics")
+        render_empty_state(
+            title="Monthly report generator ready",
+            message="Monthly reports consolidate site assessments, audit findings, and PPE compliance trends across all jobsite locations.",
+            icon="▧",
         )
+
+    with report_tabs[2]:
+        render_section_heading("Custom Date Range Query", "Select custom start and end parameters")
+        r_col1, r_col2 = st.columns(2)
+        with r_col1:
+            st.date_input("Start Date", value=datetime.now(timezone.utc).date())
+        with r_col2:
+            st.date_input("End Date", value=datetime.now(timezone.utc).date())
+        render_empty_state(
+            title="Select parameters to generate custom report",
+            message="Adjust date filters above to isolate specific construction phases or weather event intervals.",
+            icon="📅",
+        )
+
+    with report_tabs[3]:
+        render_section_heading("Active Safety Alerts", "Automated hazard escalation triggers")
+        st.markdown(
+            """
+            <div class="cs-risk-banner high">
+                ⚠️ <strong>HIGH WIND WARNING</strong> — Forecast indicates gusts above 25 knots. Cease crane lifting and secure all elevated scaffold materials immediately.
+            </div>
+            <div class="cs-risk-banner medium">
+                ℹ️ <strong>PPE COMPLIANCE NOTICE</strong> — Excavation zones exhibited lower eye-protection compliance. Safety supervisors to conduct spot audits during afternoon shift.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with report_tabs[4]:
+        render_section_heading("Formal Export Center", "Download formatted safety data packages")
+        st.markdown(
+            """
+            <div class="cs-card">
+                <div class="cs-card-header">Available Export Formats</div>
+                <p style="color: #c3c3cc; font-size: 0.9rem;">
+                    Safety Intelligence reports can be exported in structured formats for external audit, OSHA documentation, and joint safety committee review.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        exp_col1, exp_col2 = st.columns(2)
+        with exp_col1:
+            if data_loaded:
+                st.download_button(
+                    label="⬇ Download Complete Incident Dataset (CSV)",
+                    data=incidents_df.to_csv(index=False).encode("utf-8"),
+                    file_name="incidents_export.csv",
+                    mime="text/csv",
+                    type="primary",
+                    use_container_width=True,
+                )
+        with exp_col2:
+            site_hist = load_prediction_history()
+            if not site_hist.empty:
+                st.download_button(
+                    label="⬇ Download Site Prediction History (CSV)",
+                    data=site_hist.to_csv(index=False).encode("utf-8"),
+                    file_name="site_prediction_history.csv",
+                    mime="text/csv",
+                    type="secondary",
+                    use_container_width=True,
+                )
+            else:
+                st.button("📄 Export Formal PDF Report (Preparing)", disabled=True, use_container_width=True)
+
+
+# ==============================================================================
+# 6. SAFETY
+# ==============================================================================
+
+elif current_page == "Safety":
+    render_page_hero(
+        title="Field Safety Operations",
+        subtitle="Operational hazard controls, preventive action databases, and safety checklist verification.",
+        tagline="SAFETY OPERATIONS",
+    )
+
+    safety_tabs = st.tabs(["Preventive Actions", "Safety Checklists", "Toolbox Talks Library"])
+
+    with safety_tabs[0]:
+        render_section_heading("Task Preventive Controls", "Review and select safety controls tailored to activity and risk severity")
+        s_col1, s_col2 = st.columns(2)
+        with s_col1:
+            sel_act = st.selectbox(
+                "Select Construction Activity",
+                [
+                    "Working at Height", "Electrical Work", "Excavation",
+                    "Scaffolding", "Welding", "Lifting",
+                    "Material Handling", "Vehicle Movement",
+                    "Confined Space", "Housekeeping",
+                ],
+                key="safety_act_sel",
+            )
+        with s_col2:
+            sel_risk = st.selectbox(
+                "Activity Risk Severity",
+                ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+                index=2,
+                key="safety_risk_sel",
+            )
+
+        render_section_heading(f"Recommended Controls for {sel_act}", "Required jobsite verifications")
+        act_recs = get_recommendations(sel_act)
+        for rec in act_recs:
+            st.checkbox(rec, value=False, key=f"chk_rec_{rec[:20]}")
+
+        risk_escalation_actions = {
+            "LOW": ["Follow standard jobsite PPE policy.", "Verify routine housekeeping in task zone."],
+            "MEDIUM": ["Conduct documented pre-task safety discussion.", "Inspect tool condition and electrical cables."],
+            "HIGH": ["Verify task-specific Job Hazard Analysis (JHA).", "Designate certified supervisor oversight.", "Establish physical perimeter barricades."],
+            "CRITICAL": ["Obtain written high-risk permit before work start.", "Verify zero energy state and secondary safety backups.", "Designate full-time safety observer."],
+        }
+
+        render_section_heading(f"Additional Escalation Controls ({sel_risk} Risk)", "Strict enforcement controls")
+        for esc in risk_escalation_actions.get(sel_risk, []):
+            st.checkbox(esc, value=False, key=f"chk_esc_{esc[:20]}")
+
+    with safety_tabs[1]:
+        render_section_heading("Jobsite Pre-Work Safety Checklists", "Standard digital audit templates")
+        st.markdown(
+            """
+            <div class="cs-card-flat">
+                <div class="cs-card-header">Daily General Jobsite Audit</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.checkbox("Emergency egress routes and fire extinguishers unobstructed", value=True)
+        st.checkbox("All workers equipped with ANSI-approved hard hats, safety glasses, and steel-toe boots", value=True)
+        st.checkbox("First aid kits fully stocked and emergency contact numbers posted", value=True)
+        st.checkbox("Weather forecast verified against planned heavy lifting and exterior operations", value=False)
+        st.checkbox("Hot work permits issued and 30-minute fire watch assigned for welding tasks", value=False)
+
+    with safety_tabs[2]:
+        render_section_heading("Toolbox Talks Briefing Repository", "Standard 5-minute pre-shift briefing templates")
+        for act in ["Working at Height", "Electrical Work", "Scaffolding", "Excavation", "Lifting"]:
+            with st.expander(f"🗣 {act} — Toolbox Talk Topics", expanded=(act == "Working at Height")):
+                topics = get_toolbox_topics(act)
+                for t in topics:
+                    st.markdown(f"• **{t}**")
+
+
+# ==============================================================================
+# 7. AI SAFETY
+# ==============================================================================
+
+elif current_page == "AI Safety":
+    render_page_hero(
+        title="AI Safety Intelligence",
+        subtitle="Generative safety analysis, automated hazard explanations, and AI-driven toolbox briefings (Preview).",
+        tagline="AI SAFETY CO-PILOT",
+    )
 
     st.markdown(
         """
-        <div class="insight-box">
-            This weekly brief is based on historical incident data and
-            is intended to support safety discussions. It does not
-            replace professional site risk assessments or safety procedures.
+        <div class="cs-card">
+            <div class="cs-card-header">
+                <span>✦ AI Safety Co-Pilot Architecture</span>
+                <span class="cs-badge cs-badge-medium">Phase 3 Preview</span>
+            </div>
+            <p style="color: #c3c3cc; font-size: 0.92rem; line-height: 1.6;">
+                The AI Safety Intelligence module will integrate deep contextual hazard models with project documents
+                to deliver real-time risk explanations, automated weekly executive briefs, and instant regulatory guidance.
+            </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+    ai_tab1, ai_tab2, ai_tab3, ai_tab4 = st.tabs([
+        "AI Safety Analyst", "AI Risk Explanation", "AI Weekly Safety Brief", "AI Recommendations"
+    ])
 
-# =========================================================
-# SAFETY DISCLAIMER
-# =========================================================
+    with ai_tab1:
+        render_section_heading("AI Safety Analyst Query Interface", "Interactive natural-language hazard assistant")
+        sample_prompt = st.selectbox(
+            "Select an AI Safety Query Template:",
+            [
+                "Analyze safety risks for multi-crane tandem lift near public roadway",
+                "Generate custom toolbox briefing for steel erection in freezing rain",
+                "Explain correlation between night shifts and PPE compliance drops",
+                "Review OSHA Subpart M fall protection compliance requirements for steep pitch roofs",
+            ],
+        )
+        query_input = st.text_input("Or enter a custom jobsite hazard query:", value=sample_prompt)
+        ai_run_btn = st.button("✦ Generate AI Safety Analysis (Preview)", type="primary")
+
+        if ai_run_btn:
+            st.markdown(
+                f"""
+                <div class="cs-card-flat" style="border-left: 3px solid #5266eb;">
+                    <div class="cs-card-header">
+                        <span>✦ AI Safety Analyst Response (Preview Mode)</span>
+                        <span style="font-family: monospace; font-size: 0.78rem; color: #8e8e9c;">Model: Safety-GPT / Engine v2.4</span>
+                    </div>
+                    <p style="color: #ededf3; font-size: 0.92rem; line-height: 1.6;">
+                        <strong>Hazard Synthesis:</strong> For <em>"{query_input}"</em>, historical benchmark data highlights high severity
+                        vulnerabilities related to load-line interference, ground bearing capacity under outriggers, and pedestrian barrier failure.
+                    </p>
+                    <p style="color: #c3c3cc; font-size: 0.88rem; line-height: 1.6;">
+                        <strong>Recommended Controls:</strong> (1) Implement engineered lift plan verified by PE; (2) Enforce 1.5x load radius exclusion zone with physical barricades;
+                        (3) Appoint dedicated single-channel radio rigger; (4) Pre-check ground compaction with geotechnical logs.
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    with ai_tab2:
+        render_section_heading("AI Multi-Modal Risk Explanation", "Model explainability and causality engine")
+        render_empty_state(
+            title="AI Explanation Engine Preview",
+            message="Translates machine learning feature importance into plain-language safety engineering recommendations for superintendents.",
+            icon="✦",
+        )
+
+    with ai_tab3:
+        render_section_heading("AI Automated Weekly Safety Brief", "One-click safety briefing generation")
+        render_empty_state(
+            title="Automated Briefing Generator Preview",
+            message="Synthesizes weekly incidents and planned tasks into concise bullet points for morning standups.",
+            icon="🗣",
+        )
+
+    with ai_tab4:
+        render_section_heading("AI Preventive Recommendation Engine", "Dynamic rule & pattern discovery")
+        render_empty_state(
+            title="Dynamic Recommendations Preview",
+            message="Learns jobsite-specific hazard patterns to recommend preventive adjustments prior to shift start.",
+            icon="🛡",
+        )
+
+
+# ==============================================================================
+# 8. PROJECTS
+# ==============================================================================
+
+elif current_page == "Projects":
+    render_page_hero(
+        title="Project Safety Management",
+        subtitle="Manage multi-site construction portfolios, assign active site contexts, and track safety metrics.",
+        tagline="PORTFOLIO INTELLIGENCE",
+    )
+
+    projects_df = load_projects_data()
+    site_history_df = load_prediction_history()
+
+    render_section_heading("Active Site Context", "Select the active construction project for site assessments")
+
+    default_projects = [
+        {"project_id": "PRJ-001", "project_name": "Metro Tower Expansion — Phase 2", "site/location": "Downtown Metro Hub", "start_date": "2026-01-15", "status": "Active"},
+        {"project_id": "PRJ-002", "project_name": "Central Hospital New Wing", "site/location": "North Medical District", "start_date": "2026-02-01", "status": "Active"},
+        {"project_id": "PRJ-003", "project_name": "Harbor Bridge Rehabilitation", "site/location": "South Port Pier 4", "start_date": "2025-11-10", "status": "Active"},
+    ]
+
+    all_project_names = [p["project_name"] for p in default_projects]
+    if not projects_df.empty and "project_name" in projects_df.columns:
+        for p_name in projects_df["project_name"].dropna().unique():
+            if p_name not in all_project_names:
+                all_project_names.append(p_name)
+
+    cur_idx = (
+        all_project_names.index(st.session_state.selected_project)
+        if st.session_state.selected_project in all_project_names
+        else 0
+    )
+
+    sel_p = st.selectbox(
+        "Active Project Context:",
+        all_project_names,
+        index=cur_idx,
+        key="project_switcher_select",
+    )
+
+    if sel_p != st.session_state.selected_project:
+        st.session_state.selected_project = sel_p
+        st.rerun()
+
+    st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
+    render_section_heading("Project Portfolio Overview", "Registered active jobsites")
+
+    for proj in default_projects:
+        p_name = proj["project_name"]
+        p_site = proj["site/location"]
+        p_stat = proj["status"]
+        p_date = proj["start_date"]
+
+        pred_count = 0
+        if not site_history_df.empty and "project/site" in site_history_df.columns:
+            pred_count = len(site_history_df[site_history_df["project/site"].str.contains(p_name, case=False, na=False)])
+
+        is_active_site = (p_name == st.session_state.selected_project)
+        badge_style = "border-color: #5266eb; background: rgba(82,102,235,0.08);" if is_active_site else ""
+
+        st.markdown(
+            f"""
+            <div class="cs-card" style="{badge_style}">
+                <div class="cs-card-header">
+                    <div>
+                        <strong style="color: #ededf3; font-size: 1.05rem;">{p_name}</strong>
+                        {'<span class="cs-badge cs-badge-low" style="margin-left: 0.6rem;">CURRENT ACTIVE SITE</span>' if is_active_site else ''}
+                    </div>
+                    <span class="cs-badge cs-badge-medium">{p_stat}</span>
+                </div>
+                <div style="display: flex; gap: 2rem; color: #c3c3cc; font-size: 0.85rem; margin-top: 0.5rem;">
+                    <div>📍 Location: <strong style="color: #ededf3;">{p_site}</strong></div>
+                    <div>🗓 Started: <strong style="color: #ededf3;">{p_date}</strong></div>
+                    <div>◈ Recorded Assessments: <strong style="color: #ededf3;">{pred_count}</strong></div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with st.expander("➕ Register New Project / Jobsite"):
+        with st.form("new_project_form"):
+            new_p_name = st.text_input("Project Name", placeholder="e.g. Westside Logistics Park — Building B")
+            new_p_loc = st.text_input("Site / Location", placeholder="e.g. West Industrial Zone, Plot 14")
+            new_p_date = st.date_input("Start Date", value=datetime.now(timezone.utc).date())
+            new_p_status = st.selectbox("Status", ["Active", "Planning", "Completed"])
+            submit_proj = st.form_submit_button("Register Project", type="primary")
+
+            if submit_proj and new_p_name.strip():
+                try:
+                    new_row = {
+                        "project_id": f"PRJ-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                        "project_name": new_p_name.strip(),
+                        "site/location": new_p_loc.strip() or "Unspecified",
+                        "start_date": str(new_p_date),
+                        "status": new_p_status,
+                    }
+                    df_to_save = pd.DataFrame([new_row])
+                    header = not PROJECTS_PATH.exists() or os.path.getsize(PROJECTS_PATH) == 0
+                    df_to_save.to_csv(PROJECTS_PATH, mode="a", header=header, index=False)
+                    st.success(f"Project '{new_p_name}' successfully registered.")
+                    st.session_state.selected_project = new_p_name
+                    st.rerun()
+                except Exception as p_err:
+                    st.error(f"Error registering project: {p_err}")
+
+
+# ==============================================================================
+# GLOBAL FOOTER
+# ==============================================================================
 
 render_footer()
