@@ -108,15 +108,27 @@ if "records_filter_reset" not in st.session_state:
 # ==============================================================================
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_PATH = BASE_DIR / "data" / "incidents.csv"
+BENCHMARK_DATA_PATH = BASE_DIR / "data" / "incidents.csv"
+TRAINING_DATA_PATH = BASE_DIR / "data" / "training_incidents_expanded_v3.csv"
 
 
 @st.cache_data
 def load_historical_incidents() -> pd.DataFrame:
-    """Load benchmark historical incident dataset."""
-    if not DATA_PATH.exists():
+    """Load 500-record held-out benchmark historical incident dataset."""
+    if not BENCHMARK_DATA_PATH.exists():
         return pd.DataFrame()
-    df = pd.read_csv(DATA_PATH)
+    df = pd.read_csv(BENCHMARK_DATA_PATH)
+    if "date" in df.columns:
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    return df
+
+
+@st.cache_data
+def load_training_dataset() -> pd.DataFrame:
+    """Load validated 2,000-record production safety training dataset."""
+    if not TRAINING_DATA_PATH.exists():
+        return pd.DataFrame()
+    df = pd.read_csv(TRAINING_DATA_PATH)
     if "date" in df.columns:
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
     return df
@@ -157,10 +169,12 @@ def load_projects_data() -> pd.DataFrame:
 
 try:
     incidents_df = load_historical_incidents()
-    data_loaded = not incidents_df.empty
+    training_df = load_training_dataset()
+    data_loaded = not training_df.empty if not training_df.empty else not incidents_df.empty
     data_error = None
 except Exception as err:
     incidents_df = pd.DataFrame()
+    training_df = pd.DataFrame()
     data_loaded = False
     data_error = str(err)
 
@@ -245,13 +259,13 @@ current_page = render_top_navigation()
 if current_page == "Overview":
     render_page_hero(
         title="Construction Safety Intelligence",
-        subtitle="Real-time predictive risk analytics and historical safety benchmarking for jobsites.",
+        subtitle="Real-time predictive risk analytics and safety intelligence powered by a 2,000-record validated model.",
         tagline="SAFETY INTELLIGENCE PLATFORM",
     )
 
     overview_perspective = st.radio(
         "Overview Perspective",
-        ["Site Safety", "Historical Benchmark"],
+        ["Site Safety", "Historical Data (2,000)"],
         horizontal=True,
         label_visibility="collapsed",
         key="overview_perspective_radio",
@@ -420,65 +434,66 @@ if current_page == "Overview":
 
     else:
         render_section_heading(
-            "Historical Incident Benchmark",
-            "500-incident industry benchmark dataset. Used for reference and baseline training.",
+            "Historical Safety Dataset",
+            "2,000 validated safety records powering the production risk model.",
         )
 
-        if not data_loaded:
-            st.error("Historical incident dataset could not be loaded.")
+        active_training_df = training_df if not training_df.empty else incidents_df
+        if active_training_df.empty:
+            st.error("Historical safety dataset could not be loaded.")
             if data_error:
                 st.code(data_error)
         else:
-            total_incidents = len(incidents_df)
-            crit_cnt = int((incidents_df["risk_level"] == "CRITICAL").sum())
-            high_cnt = int((incidents_df["risk_level"] == "HIGH").sum())
-            med_cnt = int((incidents_df["risk_level"] == "MEDIUM").sum())
-            low_cnt = int((incidents_df["risk_level"] == "LOW").sum())
+            total_training = len(active_training_df)
+            crit_cnt = int((active_training_df["risk_level"] == "CRITICAL").sum())
+            high_cnt = int((active_training_df["risk_level"] == "HIGH").sum())
+            med_cnt = int((active_training_df["risk_level"] == "MEDIUM").sum())
+            low_cnt = int((active_training_df["risk_level"] == "LOW").sum())
 
             kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
             with kpi1:
-                render_metric_card("Total Baseline", total_incidents, "Historical records", variant="accent")
+                render_metric_card("Total Historical Data", f"{total_training:,}", "Validated safety records", variant="accent")
             with kpi2:
-                render_metric_card("Critical Risk", crit_cnt, f"{(crit_cnt / total_incidents * 100):.1f}% share", variant="critical")
+                render_metric_card("Critical Risk", f"{crit_cnt:,}", f"{(crit_cnt / total_training * 100):.1f}% share", variant="critical")
             with kpi3:
-                render_metric_card("High Risk", high_cnt, f"{(high_cnt / total_incidents * 100):.1f}% share", variant="high")
+                render_metric_card("High Risk", f"{high_cnt:,}", f"{(high_cnt / total_training * 100):.1f}% share", variant="high")
             with kpi4:
-                render_metric_card("Medium Risk", med_cnt, f"{(med_cnt / total_incidents * 100):.1f}% share", variant="medium")
+                render_metric_card("Medium Risk", f"{med_cnt:,}", f"{(med_cnt / total_training * 100):.1f}% share", variant="medium")
             with kpi5:
-                render_metric_card("Low Risk", low_cnt, f"{(low_cnt / total_incidents * 100):.1f}% share", variant="low")
+                render_metric_card("Low Risk", f"{low_cnt:,}", f"{(low_cnt / total_training * 100):.1f}% share", variant="low")
 
             st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
 
-            col_b1, col_b2 = st.columns(2)
-            with col_b1:
-                render_section_heading("Benchmark Risk Distribution", "Incidents by category")
-                b_risk_counts = (
-                    incidents_df["risk_level"]
+            col_t1, col_t2 = st.columns(2)
+            with col_t1:
+                render_section_heading("Historical Risk Distribution", "2,000-record category distribution")
+                t_risk_counts = (
+                    active_training_df["risk_level"]
                     .value_counts()
                     .reindex(["LOW", "MEDIUM", "HIGH", "CRITICAL"], fill_value=0)
                     .reset_index()
                 )
-                b_risk_counts.columns = ["Risk Level", "Incidents"]
-                fig_b_risk = px.bar(
-                    b_risk_counts,
+                t_risk_counts.columns = ["Risk Level", "Records"]
+                fig_t_risk = px.bar(
+                    t_risk_counts,
                     x="Risk Level",
-                    y="Incidents",
+                    y="Records",
                     color="Risk Level",
                     color_discrete_map=RISK_COLOR_DISCRETE_MAP,
-                    text="Incidents",
+                    text="Records",
                 )
-                fig_b_risk.update_traces(textposition="outside")
-                style_mercury_chart(fig_b_risk)
-                st.plotly_chart(fig_b_risk, use_container_width=True)
+                fig_t_risk.update_traces(textposition="outside")
+                style_mercury_chart(fig_t_risk)
+                st.plotly_chart(fig_t_risk, use_container_width=True)
 
-            with col_b2:
-                render_section_heading("Severity Breakdown", "Incident consequence severity")
-                sev_counts = incidents_df["severity"].value_counts().reset_index()
-                sev_counts.columns = ["Severity", "Incidents"]
+            with col_t2:
+                render_section_heading("Severity Breakdown", "Historical consequence severity")
+                sev_counts = active_training_df["severity"].value_counts().reset_index()
+                sev_counts.columns = ["Severity", "Records"]
                 fig_sev = px.pie(
                     sev_counts,
                     names="Severity",
-                    values="Incidents",
+                    values="Records",
                     hole=0.45,
                     color_discrete_sequence=[
                         SAFETY_COLORS["LOW"],
@@ -491,36 +506,36 @@ if current_page == "Overview":
                 style_mercury_chart(fig_sev)
                 st.plotly_chart(fig_sev, use_container_width=True)
 
-            col_b3, col_b4 = st.columns(2)
-            with col_b3:
-                render_section_heading("Incidents by Construction Activity", "Historical frequency")
-                act_counts = incidents_df["activity_type"].value_counts().reset_index()
-                act_counts.columns = ["Activity", "Incidents"]
+            col_t3, col_t4 = st.columns(2)
+            with col_t3:
+                render_section_heading("Incidents by Construction Activity", "Historical hazard frequency")
+                act_counts = active_training_df["activity_type"].value_counts().reset_index()
+                act_counts.columns = ["Activity", "Records"]
                 fig_act = px.bar(
                     act_counts,
-                    x="Incidents",
+                    x="Records",
                     y="Activity",
                     orientation="h",
-                    color="Incidents",
+                    color="Records",
                     color_continuous_scale=MONO_ACCENT_SCALE,
                 )
                 fig_act.update_layout(coloraxis_showscale=False)
                 style_mercury_chart(fig_act)
                 st.plotly_chart(fig_act, use_container_width=True)
 
-            with col_b4:
-                render_section_heading("Daily Incident Timeline", "Historical event series")
+            with col_t4:
+                render_section_heading("Historical Incident Event Timeline", "Event series across historical dataset")
                 daily_df = (
-                    incidents_df.dropna(subset=["date"])
+                    active_training_df.dropna(subset=["date"])
                     .groupby("date")
                     .size()
-                    .reset_index(name="Incidents")
+                    .reset_index(name="Records")
                     .sort_values("date")
                 )
                 fig_time = px.line(
                     daily_df,
                     x="date",
-                    y="Incidents",
+                    y="Records",
                     markers=True,
                 )
                 fig_time.update_traces(
@@ -539,15 +554,16 @@ if current_page == "Overview":
 elif current_page == "Risk Predictor":
     render_page_hero(
         title="Construction Risk Predictor",
-        subtitle="Evaluate planned construction tasks before execution using our trained risk model.",
+        subtitle="Evaluate planned construction tasks before execution using our production risk model (trained on 2,000 validated safety records).",
         tagline="PREDICTIVE HAZARD ENGINE",
     )
 
-    if data_loaded:
-        activity_options = sorted(incidents_df["activity_type"].dropna().unique().tolist())
-        location_options = sorted(incidents_df["location_type"].dropna().unique().tolist())
-        weather_options = sorted(incidents_df["weather"].dropna().unique().tolist())
-        shift_options = sorted(incidents_df["shift"].dropna().unique().tolist())
+    source_vocab_df = training_df if not training_df.empty else incidents_df
+    if not source_vocab_df.empty:
+        activity_options = sorted(source_vocab_df["activity_type"].dropna().unique().tolist())
+        location_options = sorted(source_vocab_df["location_type"].dropna().unique().tolist())
+        weather_options = sorted(source_vocab_df["weather"].dropna().unique().tolist())
+        shift_options = sorted(source_vocab_df["shift"].dropna().unique().tolist())
     else:
         activity_options = [
             "Working at Height", "Lifting", "Scaffolding", "Excavation",
@@ -763,7 +779,7 @@ elif current_page == "Analytics":
 
     analytics_perspective = st.radio(
         "Analytics Perspective",
-        ["Site Analytics", "Historical Benchmark"],
+        ["Site Analytics", "Historical Data Intelligence (2,000)"],
         horizontal=True,
         label_visibility="collapsed",
         key="analytics_perspective_radio",
@@ -1005,25 +1021,26 @@ elif current_page == "Analytics":
                             render_metric_card("Site Avg PPE", f"{single_p['Avg PPE %']:.1f}%", variant="medium")
 
     else:
-        render_section_heading("Historical Benchmark Risk Patterns", "500-record benchmark intelligence")
-        if not data_loaded:
-            st.error("Historical incident data is not loaded.")
+        render_section_heading("Historical Safety Patterns", "Intelligence from 2,000 validated safety records powering the production model")
+        active_training_df = training_df if not training_df.empty else incidents_df
+        if active_training_df.empty:
+            st.error("Historical safety dataset could not be loaded.")
         else:
-            high_risk_df = incidents_df[
-                incidents_df["risk_level"].isin(["HIGH", "CRITICAL"])
+            high_risk_df = active_training_df[
+                active_training_df["risk_level"].isin(["HIGH", "CRITICAL"])
             ].copy()
 
             col_a1, col_a2 = st.columns(2)
             with col_a1:
-                render_section_heading("High-Risk Activity Patterns", "HIGH & CRITICAL incident volume")
+                render_section_heading("High-Risk Activity Patterns", "HIGH & CRITICAL volume in 2,000-record dataset")
                 act_counts = high_risk_df["activity_type"].value_counts().reset_index()
-                act_counts.columns = ["Activity", "High/Critical Incidents"]
+                act_counts.columns = ["Activity", "High/Critical Records"]
                 fig_h_act = px.bar(
                     act_counts,
-                    x="High/Critical Incidents",
+                    x="High/Critical Records",
                     y="Activity",
                     orientation="h",
-                    color="High/Critical Incidents",
+                    color="High/Critical Records",
                     color_continuous_scale=SAFETY_ALERT_SCALE,
                 )
                 fig_h_act.update_layout(coloraxis_showscale=False)
@@ -1033,13 +1050,13 @@ elif current_page == "Analytics":
             with col_a2:
                 render_section_heading("High-Risk Location Patterns", "Locations with elevated severe hazards")
                 loc_counts = high_risk_df["location_type"].value_counts().reset_index()
-                loc_counts.columns = ["Location", "High/Critical Incidents"]
+                loc_counts.columns = ["Location", "High/Critical Records"]
                 fig_h_loc = px.bar(
                     loc_counts,
-                    x="High/Critical Incidents",
+                    x="High/Critical Records",
                     y="Location",
                     orientation="h",
-                    color="High/Critical Incidents",
+                    color="High/Critical Records",
                     color_continuous_scale=MONO_ACCENT_SCALE,
                 )
                 fig_h_loc.update_layout(coloraxis_showscale=False)
@@ -1050,17 +1067,17 @@ elif current_page == "Analytics":
             col_a3, col_a4 = st.columns(2)
 
             with col_a3:
-                render_section_heading("Weather vs Risk Level Matrix", "Cross-tabulated benchmark frequency")
+                render_section_heading("Weather vs Risk Level Matrix", "Cross-tabulated historical distribution")
                 weather_crosstab = pd.crosstab(
-                    incidents_df["weather"],
-                    incidents_df["risk_level"],
+                    active_training_df["weather"],
+                    active_training_df["risk_level"],
                 ).reindex(columns=["LOW", "MEDIUM", "HIGH", "CRITICAL"], fill_value=0)
                 st.dataframe(weather_crosstab, use_container_width=True)
 
             with col_a4:
-                render_section_heading("PPE Compliance by Risk Level", "Observed historical average")
+                render_section_heading("PPE Compliance by Risk Level", "Observed historical dataset average")
                 ppe_summary = (
-                    incidents_df.groupby("risk_level")["ppe_compliance_pct"]
+                    active_training_df.groupby("risk_level")["ppe_compliance_pct"]
                     .mean()
                     .reindex(["LOW", "MEDIUM", "HIGH", "CRITICAL"])
                     .reset_index()
@@ -1087,13 +1104,13 @@ elif current_page == "Analytics":
 elif current_page == "Records":
     render_page_hero(
         title="Safety Data & Records",
-        subtitle="Search, filter, inspect, and audit company risk predictions and historical incident logs.",
+        subtitle="Search, filter, inspect, and audit company risk predictions, historical records, and site incident logs.",
         tagline="DATA MANAGEMENT",
     )
 
     records_tab = st.radio(
         "Records View",
-        ["Risk Predictions", "Actual Incidents"],
+        ["Risk Predictions", "Historical Data (2,000)", "Actual Incidents"],
         horizontal=True,
         label_visibility="collapsed",
         key="records_tab_radio",
@@ -1311,6 +1328,91 @@ elif current_page == "Records":
                 file_name="site_prediction_history.csv",
                 mime="text/csv",
                 type="secondary",
+            )
+
+    elif records_tab == "Historical Data (2,000)":
+        render_section_heading("Historical Safety Dataset", "2,000 validated safety records powering the active production risk model")
+        active_training_df = training_df if not training_df.empty else incidents_df
+        if active_training_df.empty:
+            st.error("Historical safety dataset could not be loaded.")
+        else:
+            st.markdown('<div class="cs-card-flat">', unsafe_allow_html=True)
+            st.caption("FILTER HISTORICAL RECORDS")
+
+            rf_t = st.session_state.records_filter_reset
+
+            col_t1, col_t2, col_t3, col_t4 = st.columns(4)
+            with col_t1:
+                t_act_opts = ["All"] + sorted(active_training_df["activity_type"].dropna().unique().tolist())
+                sel_t_act = st.selectbox("Activity Type", t_act_opts, index=0, key=f"rec_t_act_{rf_t}")
+            with col_t2:
+                t_risk_opts = ["All", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
+                sel_t_risk = st.selectbox("Risk Level", t_risk_opts, index=0, key=f"rec_t_risk_{rf_t}")
+            with col_t3:
+                t_loc_opts = ["All"] + sorted(active_training_df["location_type"].dropna().unique().tolist())
+                sel_t_loc = st.selectbox("Location Type", t_loc_opts, index=0, key=f"rec_t_loc_{rf_t}")
+            with col_t4:
+                t_w_opts = ["All"] + sorted(active_training_df["weather"].dropna().unique().tolist())
+                sel_t_w = st.selectbox("Weather", t_w_opts, index=0, key=f"rec_t_w_{rf_t}")
+
+            col_ts1, col_ts2 = st.columns([3.5, 0.5])
+            with col_ts1:
+                search_t = st.text_input("Search Description / Keywords", placeholder="Search historical dataset records...", key=f"rec_t_search_{rf_t}")
+            with col_ts2:
+                st.markdown("<div style='margin-top: 1.85rem;'></div>", unsafe_allow_html=True)
+                if st.button("Reset", key="rec_t_reset_btn", use_container_width=True):
+                    st.session_state.records_filter_reset += 1
+                    st.rerun()
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            filtered_t = active_training_df.copy()
+            if sel_t_act != "All":
+                filtered_t = filtered_t[filtered_t["activity_type"] == sel_t_act]
+            if sel_t_risk != "All":
+                filtered_t = filtered_t[filtered_t["risk_level"] == sel_t_risk]
+            if sel_t_loc != "All":
+                filtered_t = filtered_t[filtered_t["location_type"] == sel_t_loc]
+            if sel_t_w != "All":
+                filtered_t = filtered_t[filtered_t["weather"] == sel_t_w]
+            if search_t.strip():
+                qt = search_t.strip().lower()
+                filtered_t = filtered_t[
+                    filtered_t["description"].fillna("").str.lower().str.contains(qt)
+                    | filtered_t["activity_type"].fillna("").str.lower().str.contains(qt)
+                ]
+
+            st.markdown(
+                f"""
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                    <span class="cs-chip active">Showing {len(filtered_t):,} of {len(active_training_df):,} historical records</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            tc1, tc2, tc3, tc4 = st.columns(4)
+            with tc1:
+                render_metric_card("Matching Records", f"{len(filtered_t):,}", variant="accent")
+            with tc2:
+                h_crit_t = int(filtered_t["risk_level"].isin(["HIGH", "CRITICAL"]).sum())
+                render_metric_card("High / Critical Count", f"{h_crit_t:,}", variant="high")
+            with tc3:
+                avg_ppe_t = float(filtered_t["ppe_compliance_pct"].mean()) if not filtered_t.empty else 0.0
+                render_metric_card("Avg PPE Compliance", f"{avg_ppe_t:.1f}%", variant="medium")
+            with tc4:
+                avg_crew_t = float(filtered_t["crew_size"].mean()) if not filtered_t.empty else 0.0
+                render_metric_card("Avg Crew Size", f"{avg_crew_t:.1f} workers", variant="default")
+
+            st.dataframe(filtered_t, use_container_width=True, hide_index=True)
+
+            csv_t = filtered_t.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="⬇ Export Historical Data (CSV)",
+                data=csv_t,
+                file_name="historical_safety_dataset_2000.csv",
+                mime="text/csv",
+                type="primary",
             )
 
     else:
@@ -1673,7 +1775,7 @@ elif current_page == "Reports":
             <div class="cs-card-flat" style="margin-bottom: 1rem;">
                 <div style="font-weight: 600; color: #ededf3; margin-bottom: 0.25rem;">Available Data Exports</div>
                 <p style="color: #c3c3cc; font-size: 0.88rem; line-height: 1.5; margin: 0;">
-                    Download verified benchmark datasets and company site prediction records in standard CSV format for external auditing, OSHA records, and joint safety committee review.
+                    Download historical safety datasets and company site prediction records in standard CSV format for external auditing, OSHA records, and joint safety committee review.
                 </p>
             </div>
             """,
@@ -1681,11 +1783,12 @@ elif current_page == "Reports":
         )
         exp_col1, exp_col2 = st.columns(2)
         with exp_col1:
-            if data_loaded:
+            active_train_export = training_df if not training_df.empty else incidents_df
+            if not active_train_export.empty:
                 st.download_button(
-                    label="⬇ Download Historical Benchmark Dataset (500 Records)",
-                    data=incidents_df.to_csv(index=False).encode("utf-8"),
-                    file_name="historical_incidents_benchmark.csv",
+                    label=f"⬇ Download Historical Data ({len(active_train_export):,} Records)",
+                    data=active_train_export.to_csv(index=False).encode("utf-8"),
+                    file_name="historical_safety_dataset_2000.csv",
                     mime="text/csv",
                     type="primary",
                     use_container_width=True,
