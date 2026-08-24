@@ -1810,38 +1810,7 @@ elif current_page == "Safety":
 
 
 # ==============================================================================
-# 7. AI SAFETY (HONEST FUTURE RELEASE STATUS)
-# ==============================================================================
-
-elif current_page == "AI Safety":
-    render_page_hero(
-        title="AI Safety Intelligence",
-        subtitle="Generative safety analysis, automated hazard explanations, and AI-driven toolbox briefings.",
-        tagline="AI SAFETY CO-PILOT",
-    )
-
-    ai_html = (
-        '<div class="cs-card-flat" style="border-left: 3px solid #5266eb; padding: 2rem; margin-top: 1rem;">'
-        '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">'
-        '<div style="display: flex; align-items: center; gap: 0.75rem;">'
-        '<span style="font-size: 1.75rem;">✦</span>'
-        '<strong style="color: #ededf3; font-size: 1.25rem;">AI Safety Intelligence Workspace</strong>'
-        '</div>'
-        '<span class="cs-badge cs-badge-medium" style="font-size: 0.85rem;">Scheduled for Future Release</span>'
-        '</div>'
-        '<p style="color: #ededf3; font-size: 0.98rem; line-height: 1.6; margin-bottom: 1rem;">'
-        'AI Safety Intelligence features will be introduced in a future release.'
-        '</p>'
-        '<p style="color: #c3c3cc; font-size: 0.9rem; line-height: 1.6; margin: 0;">'
-        'This workspace will provide AI-assisted hazard synthesis, automated compliance auditing, natural-language briefing generation, and contextual risk explanations powered by generative AI models.'
-        '</p>'
-        '</div>'
-    )
-    st.markdown(ai_html, unsafe_allow_html=True)
-
-
-# ==============================================================================
-# 8. PROJECTS
+# 7. PROJECTS
 # ==============================================================================
 
 elif current_page == "Projects":

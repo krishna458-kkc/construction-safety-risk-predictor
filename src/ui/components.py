@@ -16,7 +16,6 @@ PAGES = [
     "Records",
     "Reports",
     "Safety",
-    "AI Safety",
     "Projects",
 ]
 
@@ -27,7 +26,6 @@ NAV_GLYPHS = {
     "Records": "▤",
     "Reports": "▧",
     "Safety": "🛡",
-    "AI Safety": "✦",
     "Projects": "▣",
 }
 
@@ -59,7 +57,7 @@ def render_global_header(current_project: Optional[str] = None) -> None:
     st.markdown(html, unsafe_allow_html=True)
 
 
-NAV_WEIGHTS = [1.0, 1.32, 1.05, 0.95, 0.95, 0.9, 1.02, 0.98]
+NAV_WEIGHTS = [1.0, 1.35, 1.05, 0.95, 0.95, 0.9, 0.98]
 
 
 def render_top_navigation() -> str:
