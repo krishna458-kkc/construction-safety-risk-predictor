@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+from src.recommendations import get_recommendations
+
 # ==============================================================================
 # CENTRALIZED ALERT THRESHOLD CONFIGURATION
 # ==============================================================================

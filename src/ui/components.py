@@ -21,7 +21,7 @@ PAGES = [
 ]
 
 NAV_GLYPHS = {
-    "Overview": "⌂",
+    "Overview": "▦",
     "Risk Predictor": "◈",
     "Analytics": "▥",
     "Records": "▤",
@@ -35,43 +35,41 @@ NAV_GLYPHS = {
 def render_global_header(current_project: Optional[str] = None) -> None:
     """Render the top application header with technical branding and active project/status chips."""
     project_label = current_project if current_project else "Site: All Projects"
-    st.markdown(
-        f"""
-        <div class="cs-header">
-            <div class="cs-brand-group">
-                <div class="cs-brand-icon">🦺</div>
-                <div>
-                    <h1 class="cs-brand-title">Construction Safety Intelligence</h1>
-                    <p class="cs-brand-subtitle">Predictive Risk Engineering & Operations</p>
-                </div>
-            </div>
-            <div class="cs-header-meta">
-                <div class="cs-chip active">
-                    <span>🏢</span>
-                    <span>{project_label}</span>
-                </div>
-                <div class="cs-chip">
-                    <span class="cs-status-dot"></span>
-                    <span>System Active</span>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    html = (
+        f'<div class="cs-header">'
+        f'<div class="cs-brand-group">'
+        f'<div class="cs-brand-icon">🦺</div>'
+        f'<div>'
+        f'<h1 class="cs-brand-title">Construction Safety Intelligence</h1>'
+        f'<p class="cs-brand-subtitle">Predictive Risk Engineering & Operations</p>'
+        f'</div>'
+        f'</div>'
+        f'<div class="cs-header-meta">'
+        f'<div class="cs-chip active">'
+        f'<span>🏢</span>'
+        f'<span>{project_label}</span>'
+        f'</div>'
+        f'<div class="cs-chip">'
+        f'<span class="cs-status-dot"></span>'
+        f'<span>System Active</span>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
     )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+NAV_WEIGHTS = [1.0, 1.32, 1.05, 0.95, 0.95, 0.9, 1.02, 0.98]
 
 
 def render_top_navigation() -> str:
-    """Render the 8-item horizontal navigation pill bar."""
+    """Render the floating Command Center navigation bar."""
     if "current_page" not in st.session_state:
         st.session_state.current_page = PAGES[0]
 
+    st.markdown('<div class="cs-command-nav-anchor"></div>', unsafe_allow_html=True)
     with st.container():
-        st.markdown(
-            '<div class="nav-marker"></div><div class="cs-nav-wrapper"></div>',
-            unsafe_allow_html=True,
-        )
-        cols = st.columns(len(PAGES))
+        cols = st.columns(NAV_WEIGHTS)
         for idx, page_name in enumerate(PAGES):
             with cols[idx]:
                 is_active = st.session_state.current_page == page_name
@@ -94,16 +92,14 @@ def render_page_hero(
     tagline: str = "CONSTRUCTION SAFETY INTELLIGENCE",
 ) -> None:
     """Render architectural page header with spacious typography."""
-    st.markdown(
-        f"""
-        <div class="cs-page-hero">
-            <div class="cs-page-tagline">{tagline}</div>
-            <h2 class="cs-page-title">{title}</h2>
-            <p class="cs-page-desc">{subtitle}</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    html = (
+        f'<div class="cs-page-hero">'
+        f'<div class="cs-page-tagline">{tagline}</div>'
+        f'<h2 class="cs-page-title">{title}</h2>'
+        f'<p class="cs-page-desc">{subtitle}</p>'
+        f'</div>'
     )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def render_section_heading(title: str, subtitle: Optional[str] = None) -> None:
@@ -111,15 +107,13 @@ def render_section_heading(title: str, subtitle: Optional[str] = None) -> None:
     subtitle_html = (
         f'<span class="cs-section-subtitle">{subtitle}</span>' if subtitle else ""
     )
-    st.markdown(
-        f"""
-        <div class="cs-section-header">
-            <h3 class="cs-section-title">{title}</h3>
-            {subtitle_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
+    html = (
+        f'<div class="cs-section-header">'
+        f'<h3 class="cs-section-title">{title}</h3>'
+        f'{subtitle_html}'
+        f'</div>'
     )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def render_metric_card(
@@ -133,18 +127,47 @@ def render_metric_card(
     subtitle_html = (
         f'<div class="cs-metric-subtitle">{subtitle}</div>' if subtitle else ""
     )
-    st.markdown(
-        f"""
-        <div class="cs-metric-card {border_class}">
-            <div>
-                <div class="cs-metric-label">{label}</div>
-                <div class="cs-metric-value">{value}</div>
-            </div>
-            {subtitle_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
+    html = (
+        f'<div class="cs-metric-card {border_class}">'
+        f'<div>'
+        f'<div class="cs-metric-label">{label}</div>'
+        f'<div class="cs-metric-value">{value}</div>'
+        f'</div>'
+        f'{subtitle_html}'
+        f'</div>'
     )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def render_project_card(
+    project_name: str,
+    location: str,
+    start_date: str,
+    status: str,
+    assessment_count: int = 0,
+    is_active: bool = False,
+) -> None:
+    """Render a clean Mercury project portfolio card with status badge and recorded assessment metrics."""
+    badge_style = "border-color: #5266eb; background: rgba(82,102,235,0.08);" if is_active else ""
+    active_badge_html = '<span class="cs-badge cs-badge-low" style="margin-left: 0.6rem;">CURRENT ACTIVE SITE</span>' if is_active else ''
+    
+    html = (
+        f'<div class="cs-card" style="{badge_style}">'
+        f'<div class="cs-card-header">'
+        f'<div>'
+        f'<strong style="color: #ededf3; font-size: 1.05rem;">{project_name}</strong>'
+        f'{active_badge_html}'
+        f'</div>'
+        f'<span class="cs-badge cs-badge-medium">{status}</span>'
+        f'</div>'
+        f'<div style="display: flex; gap: 2rem; color: #c3c3cc; font-size: 0.85rem; margin-top: 0.5rem;">'
+        f'<div>📍 Location: <strong style="color: #ededf3;">{location}</strong></div>'
+        f'<div>🗓 Started: <strong style="color: #ededf3;">{start_date}</strong></div>'
+        f'<div>◈ Recorded Assessments: <strong style="color: #ededf3;">{assessment_count}</strong></div>'
+        f'</div>'
+        f'</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def render_empty_state(
@@ -153,16 +176,14 @@ def render_empty_state(
     icon: str = "◌",
 ) -> None:
     """Render a reusable, pristine empty state for non-populated data sources."""
-    st.markdown(
-        f"""
-        <div class="cs-empty-state">
-            <div class="cs-empty-icon">{icon}</div>
-            <div class="cs-empty-title">{title}</div>
-            <div class="cs-empty-desc">{message}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    html = (
+        f'<div class="cs-empty-state">'
+        f'<div class="cs-empty-icon">{icon}</div>'
+        f'<div class="cs-empty-title">{title}</div>'
+        f'<div class="cs-empty-desc">{message}</div>'
+        f'</div>'
     )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def render_risk_badge(risk_level: str) -> str:
@@ -174,16 +195,14 @@ def render_risk_badge(risk_level: str) -> str:
 
 def render_footer() -> None:
     """Render professional engineering safety disclaimer footer."""
-    st.markdown(
-        """
-        <div class="cs-footer">
-            <p class="cs-footer-text">
-                <strong>Construction Safety Intelligence Platform</strong> — Predictive risk analytics
-                designed to enhance jobsite hazard awareness. This system operates as a decision-support
-                tool and does not replace site safety managers, formal risk assessments (JHA/JSA),
-                OSHA/regulatory compliance, or certified engineered safety plans.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    html = (
+        '<div class="cs-footer">'
+        '<p class="cs-footer-text">'
+        '<strong>Construction Safety Intelligence Platform</strong> — Predictive risk analytics '
+        'designed to enhance jobsite hazard awareness. This system operates as a decision-support '
+        'tool and does not replace site safety managers, formal risk assessments (JHA/JSA), '
+        'OSHA/regulatory compliance, or certified engineered safety plans.'
+        '</p>'
+        '</div>'
     )
+    st.markdown(html, unsafe_allow_html=True)

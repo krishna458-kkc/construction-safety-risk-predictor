@@ -35,7 +35,10 @@ from src.data_storage import (
     PREDICTION_HISTORY_PATH,
     PROJECTS_PATH,
     ensure_company_data_stores,
+    load_projects_data,
     record_prediction,
+    register_project,
+    update_project,
 )
 from src.predictor import predict
 from src.recommendations import get_recommendations
@@ -53,6 +56,7 @@ from src.ui.components import (
     render_global_header,
     render_metric_card,
     render_page_hero,
+    render_project_card,
     render_risk_badge,
     render_section_heading,
     render_top_navigation,
@@ -200,31 +204,29 @@ def render_alert_card(alert: Dict[str, Any]) -> None:
     }
     color, bg_soft, icon = color_map.get(sev, (COLOR_ACCENT_COBALT, "rgba(82,102,235,0.14)", "ℹ️"))
 
-    st.markdown(
-        f"""
-        <div class="cs-card-flat" style="border-left: 4px solid {color}; margin-bottom: 0.85rem;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.45rem;">
-                <div>
-                    <span class="cs-badge cs-badge-{sev.lower()}" style="margin-right: 0.6rem;">{icon} {sev} ALERT</span>
-                    <strong style="color: #ededf3; font-size: 1.02rem;">{alert.get('title', 'Safety Alert')}</strong>
-                </div>
-                <span class="cs-chip" style="font-size: 0.76rem;">{alert.get('period', 'Active')}</span>
-            </div>
-            <p style="color: #ededf3; font-size: 0.9rem; line-height: 1.5; margin: 0.4rem 0;">
-                <strong>Reason:</strong> {alert.get('reason', '')}
-            </p>
-            <div style="display: flex; gap: 1.5rem; color: #c3c3cc; font-size: 0.82rem; margin: 0.4rem 0;">
-                <div>◈ Scope: <strong style="color: #ededf3;">{alert.get('affected_scope', 'Site-wide')}</strong></div>
-                <div>◈ Observation: <strong style="color: #ededf3;">{alert.get('supporting_value', 'N/A')}</strong></div>
-                <div>◈ Config: <strong style="color: #8e8e9c;">{alert.get('threshold', '')}</strong></div>
-            </div>
-            <div style="background: {bg_soft}; border: 1px solid {color}40; border-radius: 6px; padding: 0.5rem 0.85rem; margin-top: 0.5rem; font-size: 0.85rem; color: #ededf3;">
-                <strong>🛡 Recommended Action:</strong> {alert.get('recommended_action', 'Review safety controls.')}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    html = (
+        f'<div class="cs-card-flat" style="border-left: 4px solid {color}; margin-bottom: 0.85rem;">'
+        f'<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.45rem;">'
+        f'<div>'
+        f'<span class="cs-badge cs-badge-{sev.lower()}" style="margin-right: 0.6rem;">{icon} {sev} ALERT</span>'
+        f'<strong style="color: #ededf3; font-size: 1.02rem;">{alert.get("title", "Safety Alert")}</strong>'
+        f'</div>'
+        f'<span class="cs-chip" style="font-size: 0.76rem;">{alert.get("period", "Active")}</span>'
+        f'</div>'
+        f'<p style="color: #ededf3; font-size: 0.9rem; line-height: 1.5; margin: 0.4rem 0;">'
+        f'<strong>Reason:</strong> {alert.get("reason", "")}'
+        f'</p>'
+        f'<div style="display: flex; gap: 1.5rem; color: #c3c3cc; font-size: 0.82rem; margin: 0.4rem 0;">'
+        f'<div>◈ Scope: <strong style="color: #ededf3;">{alert.get("affected_scope", "Site-wide")}</strong></div>'
+        f'<div>◈ Observation: <strong style="color: #ededf3;">{alert.get("supporting_value", "N/A")}</strong></div>'
+        f'<div>◈ Config: <strong style="color: #8e8e9c;">{alert.get("threshold", "")}</strong></div>'
+        f'</div>'
+        f'<div style="background: {bg_soft}; border: 1px solid {color}40; border-radius: 6px; padding: 0.5rem 0.85rem; margin-top: 0.5rem; font-size: 0.85rem; color: #ededf3;">'
+        f'<strong>🛡 Recommended Action:</strong> {alert.get("recommended_action", "Review safety controls.")}'
+        f'</div>'
+        f'</div>'
     )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 # ==============================================================================
@@ -1265,35 +1267,33 @@ elif current_page == "Records":
                     c_conf = float(chosen.get("model_confidence", 0.0))
                     c_conf_pct = c_conf * 100 if c_conf <= 1.0 else c_conf
 
-                    st.markdown(
-                        f"""
-                        <div class="cs-card-flat" style="border-left: 4px solid {SAFETY_COLORS.get(c_risk, '#5266eb')};">
-                            <div class="cs-card-header">
-                                <div>
-                                    <strong style="color: #ededf3; font-size: 1.1rem;">{chosen.get('activity_type', 'Activity')}</strong>
-                                    <span class="cs-badge cs-badge-{c_risk.lower()}" style="margin-left: 0.6rem;">{c_risk} RISK</span>
-                                </div>
-                                <span style="font-family: monospace; font-size: 0.82rem; color: #c3c3cc;">{chosen.get('timestamp', '')}</span>
-                            </div>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 1rem 0; font-size: 0.88rem; color: #c3c3cc;">
-                                <div>🏢 Project / Site: <strong style="color: #ededf3;">{chosen.get('project/site', 'Unspecified')}</strong></div>
-                                <div>📍 Location: <strong style="color: #ededf3;">{chosen.get('location_type', 'N/A')}</strong></div>
-                                <div>🌤 Weather: <strong style="color: #ededf3;">{chosen.get('weather', 'N/A')}</strong></div>
-                                <div>⏱ Shift: <strong style="color: #ededf3;">{chosen.get('shift', 'N/A')}</strong></div>
-                                <div>👥 Crew Size: <strong style="color: #ededf3;">{chosen.get('crew_size', 'N/A')} workers</strong></div>
-                                <div>🦺 PPE Compliance: <strong style="color: #ededf3;">{chosen.get('ppe_compliance_pct', 'N/A')}%</strong></div>
-                                <div>⚠️ 30-Day Incidents: <strong style="color: #ededf3;">{chosen.get('previous_incidents_30d', '0')}</strong></div>
-                                <div>◈ Risk Score: <strong style="color: #ededf3;">{c_score:.1f} / 100</strong></div>
-                                <div>✦ Model Confidence: <strong style="color: #ededf3;">{c_conf_pct:.1f}%</strong></div>
-                            </div>
-                            <div style="background: #272735; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.88rem; margin-top: 0.5rem;">
-                                <span style="color: #8e8e9c; font-size: 0.78rem; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Task / Hazard Description</span>
-                                <span style="color: #ededf3;">{chosen.get('description', 'No specific description logged.') or 'No specific description logged.'}</span>
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
+                    inspector_html = (
+                        f'<div class="cs-card-flat" style="border-left: 4px solid {SAFETY_COLORS.get(c_risk, "#5266eb")};">'
+                        f'<div class="cs-card-header">'
+                        f'<div>'
+                        f'<strong style="color: #ededf3; font-size: 1.1rem;">{chosen.get("activity_type", "Activity")}</strong>'
+                        f'<span class="cs-badge cs-badge-{c_risk.lower()}" style="margin-left: 0.6rem;">{c_risk} RISK</span>'
+                        f'</div>'
+                        f'<span style="font-family: monospace; font-size: 0.82rem; color: #c3c3cc;">{chosen.get("timestamp", "")}</span>'
+                        f'</div>'
+                        f'<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 1rem 0; font-size: 0.88rem; color: #c3c3cc;">'
+                        f'<div>🏢 Project / Site: <strong style="color: #ededf3;">{chosen.get("project/site", "Unspecified")}</strong></div>'
+                        f'<div>📍 Location: <strong style="color: #ededf3;">{chosen.get("location_type", "N/A")}</strong></div>'
+                        f'<div>🌤 Weather: <strong style="color: #ededf3;">{chosen.get("weather", "N/A")}</strong></div>'
+                        f'<div>⏱ Shift: <strong style="color: #ededf3;">{chosen.get("shift", "N/A")}</strong></div>'
+                        f'<div>👥 Crew Size: <strong style="color: #ededf3;">{chosen.get("crew_size", "N/A")} workers</strong></div>'
+                        f'<div>🦺 PPE Compliance: <strong style="color: #ededf3;">{chosen.get("ppe_compliance_pct", "N/A")}%</strong></div>'
+                        f'<div>⚠️ 30-Day Incidents: <strong style="color: #ededf3;">{chosen.get("previous_incidents_30d", "0")}</strong></div>'
+                        f'<div>◈ Risk Score: <strong style="color: #ededf3;">{c_score:.1f} / 100</strong></div>'
+                        f'<div>✦ Model Confidence: <strong style="color: #ededf3;">{c_conf_pct:.1f}%</strong></div>'
+                        f'</div>'
+                        f'<div style="background: #272735; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.88rem; margin-top: 0.5rem;">'
+                        f'<span style="color: #8e8e9c; font-size: 0.78rem; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Task / Hazard Description</span>'
+                        f'<span style="color: #ededf3;">{chosen.get("description", "No specific description logged.") or "No specific description logged."}</span>'
+                        f'</div>'
+                        f'</div>'
                     )
+                    st.markdown(inspector_html, unsafe_allow_html=True)
 
                     # Recommendations for selected row
                     act_name = str(chosen.get("activity_type", ""))
@@ -1820,26 +1820,24 @@ elif current_page == "AI Safety":
         tagline="AI SAFETY CO-PILOT",
     )
 
-    st.markdown(
-        """
-        <div class="cs-card-flat" style="border-left: 3px solid #5266eb; padding: 2rem; margin-top: 1rem;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span style="font-size: 1.75rem;">✦</span>
-                    <strong style="color: #ededf3; font-size: 1.25rem;">AI Safety Intelligence Workspace</strong>
-                </div>
-                <span class="cs-badge cs-badge-medium" style="font-size: 0.85rem;">Scheduled for Future Release</span>
-            </div>
-            <p style="color: #ededf3; font-size: 0.98rem; line-height: 1.6; margin-bottom: 1rem;">
-                AI Safety Intelligence features will be introduced in a future release.
-            </p>
-            <p style="color: #c3c3cc; font-size: 0.9rem; line-height: 1.6; margin: 0;">
-                This workspace will provide AI-assisted hazard synthesis, automated compliance auditing, natural-language briefing generation, and contextual risk explanations powered by generative AI models.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    ai_html = (
+        '<div class="cs-card-flat" style="border-left: 3px solid #5266eb; padding: 2rem; margin-top: 1rem;">'
+        '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">'
+        '<div style="display: flex; align-items: center; gap: 0.75rem;">'
+        '<span style="font-size: 1.75rem;">✦</span>'
+        '<strong style="color: #ededf3; font-size: 1.25rem;">AI Safety Intelligence Workspace</strong>'
+        '</div>'
+        '<span class="cs-badge cs-badge-medium" style="font-size: 0.85rem;">Scheduled for Future Release</span>'
+        '</div>'
+        '<p style="color: #ededf3; font-size: 0.98rem; line-height: 1.6; margin-bottom: 1rem;">'
+        'AI Safety Intelligence features will be introduced in a future release.'
+        '</p>'
+        '<p style="color: #c3c3cc; font-size: 0.9rem; line-height: 1.6; margin: 0;">'
+        'This workspace will provide AI-assisted hazard synthesis, automated compliance auditing, natural-language briefing generation, and contextual risk explanations powered by generative AI models.'
+        '</p>'
+        '</div>'
     )
+    st.markdown(ai_html, unsafe_allow_html=True)
 
 
 # ==============================================================================
@@ -1858,17 +1856,12 @@ elif current_page == "Projects":
 
     render_section_heading("Active Site Context", "Select the active construction project for site assessments")
 
-    default_projects = [
-        {"project_id": "PRJ-001", "project_name": "Metro Tower Expansion — Phase 2", "site/location": "Downtown Metro Hub", "start_date": "2026-01-15", "status": "Active"},
-        {"project_id": "PRJ-002", "project_name": "Central Hospital New Wing", "site/location": "North Medical District", "start_date": "2026-02-01", "status": "Active"},
-        {"project_id": "PRJ-003", "project_name": "Harbor Bridge Rehabilitation", "site/location": "South Port Pier 4", "start_date": "2025-11-10", "status": "Active"},
-    ]
+    all_project_names = [str(p).strip() for p in projects_df["project_name"].dropna().unique().tolist() if str(p).strip()]
+    if not all_project_names:
+        all_project_names = ["Metro Tower Expansion — Phase 2"]
 
-    all_project_names = [p["project_name"] for p in default_projects]
-    if not projects_df.empty and "project_name" in projects_df.columns:
-        for p_name in projects_df["project_name"].dropna().unique():
-            if p_name not in all_project_names:
-                all_project_names.append(p_name)
+    if st.session_state.selected_project not in all_project_names:
+        st.session_state.selected_project = all_project_names[0]
 
     cur_idx = (
         all_project_names.index(st.session_state.selected_project)
@@ -1890,39 +1883,62 @@ elif current_page == "Projects":
     st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
     render_section_heading("Project Portfolio Overview", "Registered active jobsites")
 
-    for proj in default_projects:
-        p_name = proj["project_name"]
-        p_site = proj["site/location"]
-        p_stat = proj["status"]
-        p_date = proj["start_date"]
+    for _, proj in projects_df.iterrows():
+        p_id = str(proj.get("project_id", ""))
+        p_name = str(proj.get("project_name", "")).strip()
+        p_site = str(proj.get("site/location", "Unspecified")).strip()
+        p_stat = str(proj.get("status", "Active")).strip()
+        p_date = str(proj.get("start_date", "")).strip()
 
         pred_count = 0
         if not site_history_df.empty and "project/site" in site_history_df.columns:
-            pred_count = len(site_history_df[site_history_df["project/site"].str.contains(p_name, case=False, na=False)])
+            pred_count = int((site_history_df["project/site"].astype(str).str.strip() == p_name).sum())
 
         is_active_site = (p_name == st.session_state.selected_project)
-        badge_style = "border-color: #5266eb; background: rgba(82,102,235,0.08);" if is_active_site else ""
 
-        st.markdown(
-            f"""
-            <div class="cs-card" style="{badge_style}">
-                <div class="cs-card-header">
-                    <div>
-                        <strong style="color: #ededf3; font-size: 1.05rem;">{p_name}</strong>
-                        {'<span class="cs-badge cs-badge-low" style="margin-left: 0.6rem;">CURRENT ACTIVE SITE</span>' if is_active_site else ''}
-                    </div>
-                    <span class="cs-badge cs-badge-medium">{p_stat}</span>
-                </div>
-                <div style="display: flex; gap: 2rem; color: #c3c3cc; font-size: 0.85rem; margin-top: 0.5rem;">
-                    <div>📍 Location: <strong style="color: #ededf3;">{p_site}</strong></div>
-                    <div>🗓 Started: <strong style="color: #ededf3;">{p_date}</strong></div>
-                    <div>◈ Recorded Assessments: <strong style="color: #ededf3;">{pred_count}</strong></div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        render_project_card(
+            project_name=p_name,
+            location=p_site,
+            start_date=p_date,
+            status=p_stat,
+            assessment_count=pred_count,
+            is_active=is_active_site,
         )
 
+        with st.expander(f"✏️ Edit Project Details — {p_name}", expanded=False):
+            with st.form(f"edit_proj_form_{p_id}"):
+                e_name = st.text_input("Project / Site Name", value=p_name, key=f"inp_name_{p_id}")
+                e_loc = st.text_input("Site / Location", value=p_site, key=f"inp_loc_{p_id}")
+
+                try:
+                    p_dt_val = datetime.strptime(p_date, "%Y-%m-%d").date()
+                except Exception:
+                    p_dt_val = datetime.now(timezone.utc).date()
+
+                e_date = st.date_input("Start Date", value=p_dt_val, key=f"inp_date_{p_id}")
+                status_choices = ["Active", "Planning", "Completed"]
+                stat_idx = status_choices.index(p_stat) if p_stat in status_choices else 0
+                e_status = st.selectbox("Status", status_choices, index=stat_idx, key=f"inp_stat_{p_id}")
+
+                save_btn = st.form_submit_button("Save Changes", type="primary")
+
+                if save_btn:
+                    success, msg = update_project(
+                        project_id=p_id,
+                        new_name=e_name,
+                        new_location=e_loc,
+                        new_start_date=str(e_date),
+                        new_status=e_status,
+                    )
+                    if success:
+                        if is_active_site or st.session_state.selected_project == p_name:
+                            st.session_state.selected_project = e_name.strip()
+                        st.success("Project updated successfully.")
+                        st.rerun()
+                    else:
+                        st.error(msg)
+
+    st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
     with st.expander("➕ Register New Project / Jobsite"):
         with st.form("new_project_form"):
             new_p_name = st.text_input("Project Name", placeholder="e.g. Westside Logistics Park — Building B")
@@ -1931,23 +1947,19 @@ elif current_page == "Projects":
             new_p_status = st.selectbox("Status", ["Active", "Planning", "Completed"])
             submit_proj = st.form_submit_button("Register Project", type="primary")
 
-            if submit_proj and new_p_name.strip():
-                try:
-                    new_row = {
-                        "project_id": f"PRJ-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                        "project_name": new_p_name.strip(),
-                        "site/location": new_p_loc.strip() or "Unspecified",
-                        "start_date": str(new_p_date),
-                        "status": new_p_status,
-                    }
-                    df_to_save = pd.DataFrame([new_row])
-                    header = not PROJECTS_PATH.exists() or os.path.getsize(PROJECTS_PATH) == 0
-                    df_to_save.to_csv(PROJECTS_PATH, mode="a", header=header, index=False)
-                    st.success(f"Project '{new_p_name}' successfully registered.")
-                    st.session_state.selected_project = new_p_name
+            if submit_proj:
+                success, msg = register_project(
+                    name=new_p_name,
+                    location=new_p_loc,
+                    start_date=str(new_p_date),
+                    status=new_p_status,
+                )
+                if success:
+                    st.session_state.selected_project = new_p_name.strip()
+                    st.success("Project registered successfully.")
                     st.rerun()
-                except Exception as p_err:
-                    st.error(f"Error registering project: {p_err}")
+                else:
+                    st.error(msg)
 
 
 # ==============================================================================

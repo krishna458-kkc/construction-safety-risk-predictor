@@ -630,8 +630,91 @@ def get_mercury_css() -> str:
         margin: 0;
     }}
 
+    /* ==========================================================================
+       COMMAND CENTER FLOATING NAVIGATION SYSTEM
+       ========================================================================== */
+
+    /* Container wrapper for Command Center navigation */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.cs-command-nav-anchor),
+    div[data-testid="stVerticalBlock"]:has(> div > div > .cs-command-nav-anchor) > div:nth-child(2),
+    div[data-testid="stHorizontalBlock"]:has(button[key*="cs_nav_btn_"]) {{
+        background: rgba(22, 22, 33, 0.94) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(112, 112, 125, 0.25) !important;
+        border-radius: 14px !important;
+        padding: 0.28rem 0.35rem !important;
+        margin-top: -0.6rem !important;
+        margin-bottom: 1.75rem !important;
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.52), 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+        position: sticky !important;
+        top: 0.65rem !important;
+        z-index: 999 !important;
+    }}
+
+    div[data-testid="stHorizontalBlock"]:has(button[key*="cs_nav_btn_"]) {{
+        gap: 0.2rem !important;
+    }}
+
+    /* Command Center Buttons: Unified Common Properties */
+    button[key*="cs_nav_btn_"] {{
+        white-space: nowrap !important;
+        font-size: 0.81rem !important;
+        letter-spacing: 0.01em !important;
+        padding: 0.46rem 0.22rem !important;
+        text-overflow: ellipsis !important;
+    }}
+
+    /* Command Center Buttons: Inactive Item */
+    button[key*="cs_nav_btn_"][kind="secondary"] {{
+        background: transparent !important;
+        background-color: transparent !important;
+        border: 1px solid transparent !important;
+        border-radius: 9px !important;
+        color: #9d9dae !important;
+        font-weight: 500 !important;
+        box-shadow: none !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }}
+
+    button[key*="cs_nav_btn_"][kind="secondary"]:hover {{
+        background: rgba(255, 255, 255, 0.06) !important;
+        background-color: rgba(255, 255, 255, 0.06) !important;
+        border-color: rgba(255, 255, 255, 0.12) !important;
+        color: #ededf3 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3) !important;
+    }}
+
+    /* Command Center Buttons: Active Item */
+    button[key*="cs_nav_btn_"][kind="primary"] {{
+        background: rgba(82, 102, 235, 0.22) !important;
+        background-color: rgba(82, 102, 235, 0.22) !important;
+        border: 1px solid rgba(82, 102, 235, 0.75) !important;
+        border-radius: 9px !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        box-shadow: 0 0 14px rgba(82, 102, 235, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -2px 0 rgba(82, 102, 235, 0.85) !important;
+        transform: none !important;
+    }}
+
+    button[key*="cs_nav_btn_"][kind="primary"]:hover {{
+        background: rgba(82, 102, 235, 0.30) !important;
+        background-color: rgba(82, 102, 235, 0.30) !important;
+        border-color: rgba(82, 102, 235, 0.95) !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 18px rgba(82, 102, 235, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -2px 0 rgba(82, 102, 235, 0.95) !important;
+    }}
+
     /* Responsive adjustments */
-    @media (max-width: 900px) {{
+    @media (max-width: 1100px) {{
+        button[key*="cs_nav_btn_"] {{
+            font-size: 0.74rem !important;
+            padding: 0.40rem 0.15rem !important;
+        }}
+    }}
+
+    @media (max-width: 768px) {{
         .block-container {{
             padding-left: 1rem !important;
             padding-right: 1rem !important;
@@ -639,12 +722,14 @@ def get_mercury_css() -> str:
         .cs-page-title {{ font-size: 1.5rem; }}
         .cs-header {{ flex-direction: column; align-items: flex-start; gap: 0.75rem; }}
         .cs-metric-value {{ font-size: 1.45rem; }}
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-marker)
-            div[data-testid="stHorizontalBlock"] button[kind="secondary"],
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-marker)
-            div[data-testid="stHorizontalBlock"] button[kind="primary"] {{
-            font-size: 0.72rem !important;
-            padding: 0.45rem 0.35rem !important;
+        div[data-testid="stHorizontalBlock"]:has(button[key*="cs_nav_btn_"]) {{
+            position: relative !important;
+            top: 0 !important;
+            flex-wrap: wrap !important;
+        }}
+        div[data-testid="stHorizontalBlock"]:has(button[key*="cs_nav_btn_"]) > div {{
+            flex: 1 1 calc(25% - 0.25rem) !important;
+            min-width: 75px !important;
         }}
     }}
     </style>
