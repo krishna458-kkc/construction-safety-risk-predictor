@@ -1,13 +1,13 @@
 """Construction Safety Intelligence Platform.
 
-Phase 3A — Real Company Safety Intelligence.
+Phase 3B — Safety Intelligence: Alerts, Trends, Heatmaps & Reports.
 A unified predictive safety intelligence and risk management platform.
 """
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 import plotly.express as px
@@ -15,11 +15,17 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.company_analytics import (
+    DEFAULT_ALERT_THRESHOLDS,
     calculate_activity_risk_metrics,
     calculate_ppe_analysis,
     calculate_project_comparison,
+    calculate_risk_heatmap_matrix,
     calculate_site_kpis,
+    detect_risk_trends,
+    detect_safety_alerts,
     filter_by_date_range,
+    generate_period_report,
+    get_preceding_period_df,
     safe_parse_datetime,
 )
 from src.data_storage import (
@@ -176,11 +182,49 @@ def render_date_filter_control(key_prefix: str = "df") -> Tuple[str, Optional[da
         with col_custom:
             c1, c2 = st.columns(2)
             with c1:
-                start_date = st.date_input("Start Date", value=datetime.now(timezone.utc).date(), key=f"{key_prefix}_start")
+                start_date = st.date_input("Start Date", value=datetime.now(timezone.utc).date() - timedelta(days=7), key=f"{key_prefix}_start")
             with c2:
                 end_date = st.date_input("End Date", value=datetime.now(timezone.utc).date(), key=f"{key_prefix}_end")
 
     return period, start_date, end_date
+
+
+def render_alert_card(alert: Dict[str, Any]) -> None:
+    """Render a visually strong Mercury safety alert banner card."""
+    sev = alert.get("severity", "MEDIUM").upper()
+    color_map = {
+        "CRITICAL": (SAFETY_COLORS["CRITICAL"], "rgba(239,68,68,0.14)", "🔴"),
+        "HIGH": (SAFETY_COLORS["HIGH"], "rgba(245,158,11,0.14)", "🟠"),
+        "MEDIUM": (SAFETY_COLORS["MEDIUM"], "rgba(59,130,246,0.14)", "🔵"),
+        "LOW": (SAFETY_COLORS["LOW"], "rgba(34,197,94,0.14)", "🟢"),
+    }
+    color, bg_soft, icon = color_map.get(sev, (COLOR_ACCENT_COBALT, "rgba(82,102,235,0.14)", "ℹ️"))
+
+    st.markdown(
+        f"""
+        <div class="cs-card-flat" style="border-left: 4px solid {color}; margin-bottom: 0.85rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.45rem;">
+                <div>
+                    <span class="cs-badge cs-badge-{sev.lower()}" style="margin-right: 0.6rem;">{icon} {sev} ALERT</span>
+                    <strong style="color: #ededf3; font-size: 1.02rem;">{alert.get('title', 'Safety Alert')}</strong>
+                </div>
+                <span class="cs-chip" style="font-size: 0.76rem;">{alert.get('period', 'Active')}</span>
+            </div>
+            <p style="color: #ededf3; font-size: 0.9rem; line-height: 1.5; margin: 0.4rem 0;">
+                <strong>Reason:</strong> {alert.get('reason', '')}
+            </p>
+            <div style="display: flex; gap: 1.5rem; color: #c3c3cc; font-size: 0.82rem; margin: 0.4rem 0;">
+                <div>◈ Scope: <strong style="color: #ededf3;">{alert.get('affected_scope', 'Site-wide')}</strong></div>
+                <div>◈ Observation: <strong style="color: #ededf3;">{alert.get('supporting_value', 'N/A')}</strong></div>
+                <div>◈ Config: <strong style="color: #8e8e9c;">{alert.get('threshold', '')}</strong></div>
+            </div>
+            <div style="background: {bg_soft}; border: 1px solid {color}40; border-radius: 6px; padding: 0.5rem 0.85rem; margin-top: 0.5rem; font-size: 0.85rem; color: #ededf3;">
+                <strong>🛡 Recommended Action:</strong> {alert.get('recommended_action', 'Review safety controls.')}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # ==============================================================================
@@ -725,6 +769,8 @@ elif current_page == "Analytics":
 
     if analytics_perspective == "Site Analytics":
         site_history_raw = load_prediction_history()
+        incident_records_raw = load_actual_incident_records()
+
         if site_history_raw.empty:
             render_empty_state(
                 title="No site analytics data available",
@@ -735,6 +781,7 @@ elif current_page == "Analytics":
             # Reusable Date Filter Bar
             period, s_date, e_date = render_date_filter_control("an_site")
             site_history = filter_by_date_range(site_history_raw, period, s_date, e_date)
+            prev_period_df = get_preceding_period_df(site_history_raw, period)
 
             if site_history.empty:
                 render_empty_state(
@@ -744,24 +791,42 @@ elif current_page == "Analytics":
                 )
             else:
                 kpis = calculate_site_kpis(site_history)
+                trends_data = detect_risk_trends(site_history, prev_period_df)
 
-                # KPI Summary Banner
+                # KPI Summary Banner with Trend Indicators
                 render_section_heading("Site Safety Intelligence Summary", f"Analytics for {kpis['total_assessments']} recorded site evaluations")
                 k1, k2, k3, k4, k5 = st.columns(5)
                 with k1:
                     render_metric_card("Assessments", kpis["total_assessments"], variant="accent")
                 with k2:
-                    render_metric_card("Avg Risk Score", f"{kpis['avg_risk_score']:.1f}", variant="default")
+                    render_metric_card("Avg Risk Score", f"{kpis['avg_risk_score']:.1f}", subtitle=f"Trend: {trends_data['risk_trend']}", variant="default")
                 with k3:
                     render_metric_card("High/Critical %", f"{kpis['high_critical_pct']:.1f}%", variant="high")
                 with k4:
-                    render_metric_card("Avg PPE %", f"{kpis['avg_ppe_compliance']:.1f}%", variant="medium")
+                    render_metric_card("Avg PPE %", f"{kpis['avg_ppe_compliance']:.1f}%", subtitle=f"Trend: {trends_data['ppe_trend']}", variant="medium")
                 with k5:
                     render_metric_card("Confidence", f"{kpis['avg_confidence']:.1f}%", variant="default")
 
+                # Statistical Trend Callout
+                if trends_data["status"] == "Calculated":
+                    t_badge = "cs-badge-high" if trends_data["risk_trend"] == "Increasing" else ("cs-badge-low" if trends_data["risk_trend"] == "Decreasing" else "cs-badge-medium")
+                    st.markdown(
+                        f"""
+                        <div class="cs-card-flat" style="margin: 0.85rem 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span class="cs-badge {t_badge}" style="margin-right: 0.5rem;">{trends_data['risk_trend'].upper()} RISK TRAJECTORY</span>
+                                    <span style="color: #ededf3; font-size: 0.9rem;">{trends_data['summary_text']}</span>
+                                </div>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
                 st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
 
-                # Row 1: Distribution & Trend
+                # Row 1: Distribution & Trend Timeline
                 col1, col2 = st.columns(2)
                 with col1:
                     render_section_heading("Site Risk Distribution", "Breakdown by predicted risk class")
@@ -784,7 +849,7 @@ elif current_page == "Analytics":
                     st.plotly_chart(fig_site_risk, use_container_width=True)
 
                 with col2:
-                    render_section_heading("Risk Score Timeline & Trend", "Evaluations across timeline")
+                    render_section_heading("Risk Score Timeline & Moving Trajectory", "Evaluations across timeline")
                     dt_series = safe_parse_datetime(site_history["timestamp"])
                     valid_time = dt_series.notna()
                     if valid_time.any() and "risk_score" in site_history.columns:
@@ -809,6 +874,51 @@ elif current_page == "Analytics":
                         st.plotly_chart(fig_trend, use_container_width=True)
                     else:
                         st.info("Insufficient timestamp records to plot trend.")
+
+                st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
+
+                # MULTI-DIMENSIONAL RISK HEATMAPS
+                render_section_heading("Multi-Dimensional Risk Heatmap", "Correlate operational dimensions against evaluated risk levels")
+                if len(site_history) >= 2:
+                    h_col1, h_col2 = st.columns([1.5, 2.5])
+                    with h_col1:
+                        heatmap_dimension = st.selectbox(
+                            "Heatmap Dimension:",
+                            ["Activity Type × Risk Level", "Location Type × Risk Level", "Weather Condition × Risk Level", "Project / Site × Risk Level"],
+                            index=0,
+                        )
+                        heatmap_val_mode = st.radio(
+                            "Metric Mode:",
+                            ["Assessment Counts", "Average Risk Score"],
+                            horizontal=True,
+                        )
+
+                    dim_field_map = {
+                        "Activity Type × Risk Level": "activity_type",
+                        "Location Type × Risk Level": "location_type",
+                        "Weather Condition × Risk Level": "weather",
+                        "Project / Site × Risk Level": "project/site",
+                    }
+                    target_row_col = dim_field_map.get(heatmap_dimension, "activity_type")
+                    v_mode = "avg_score" if heatmap_val_mode == "Average Risk Score" else "count"
+
+                    matrix_df = calculate_risk_heatmap_matrix(site_history, target_row_col, "predicted_risk_level", val_mode=v_mode)
+
+                    with h_col2:
+                        if not matrix_df.empty:
+                            fig_hm = px.imshow(
+                                matrix_df,
+                                text_auto=True,
+                                color_continuous_scale=SAFETY_ALERT_SCALE if v_mode == "avg_score" else MONO_ACCENT_SCALE,
+                                aspect="auto",
+                            )
+                            fig_hm.update_layout(coloraxis_showscale=False)
+                            style_mercury_chart(fig_hm, height=280)
+                            st.plotly_chart(fig_hm, use_container_width=True)
+                        else:
+                            st.info("Insufficient attribute records to construct heatmap matrix.")
+                else:
+                    st.info("More site evaluations are required to generate multi-dimensional risk heatmaps (minimum 2 records).")
 
                 st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
 
@@ -1051,7 +1161,7 @@ elif current_page == "Records":
             if period_filter == "Custom range":
                 c_c1, c_c2 = st.columns(2)
                 with c_c1:
-                    custom_s = st.date_input("Start Date", value=datetime.now(timezone.utc).date(), key=f"rec_p_cs_{rf_r}")
+                    custom_s = st.date_input("Start Date", value=datetime.now(timezone.utc).date() - timedelta(days=7), key=f"rec_p_cs_{rf_r}")
                 with c_c2:
                     custom_e = st.date_input("End Date", value=datetime.now(timezone.utc).date(), key=f"rec_p_ce_{rf_r}")
 
@@ -1289,58 +1399,76 @@ elif current_page == "Records":
 
 
 # ==============================================================================
-# 5. REPORTS
+# 5. REPORTS (COMPANY-DRIVEN SAFETY REPORTS & ALERTS CENTER)
 # ==============================================================================
 
 elif current_page == "Reports":
     render_page_hero(
-        title="Safety Reports & Briefings",
-        subtitle="Generate structured periodic safety reports, compliance briefings, and audit exports.",
-        tagline="REPORT CENTER",
+        title="Safety Reports & Intelligence Center",
+        subtitle="Generate structured company safety briefings, monitor threshold alerts, and audit compliance exports.",
+        tagline="REPORT & ALERT CENTER",
     )
 
-    report_tabs = st.tabs(["Weekly Safety Brief", "Monthly Summary", "Custom Date Range", "Safety Alerts", "Exports"])
+    pred_history_all = load_prediction_history()
+    inc_records_all = load_actual_incident_records()
 
+    report_tabs = st.tabs(["Weekly Safety Brief", "Monthly Summary", "Custom Date Range", "Safety Alerts Center", "Export Center"])
+
+    # --- TAB 1: WEEKLY SAFETY BRIEF ---
     with report_tabs[0]:
-        render_section_heading("Weekly Safety Briefing", "Operational safety overview for toolbox meetings")
-        if data_loaded:
-            incidents_df["date"] = pd.to_datetime(incidents_df["date"])
-            latest_date = incidents_df["date"].max()
-            start_date = latest_date - pd.Timedelta(days=6)
-            weekly_df = incidents_df[
-                (incidents_df["date"] >= start_date) & (incidents_df["date"] <= latest_date)
-            ].copy()
+        render_section_heading("Weekly Safety Executive Brief", "Company-specific 7-day risk synthesis and pre-task briefing")
+        
+        # 7-day filter
+        pred_7d = filter_by_date_range(pred_history_all, "Last 7 days")
+        pred_prev_7d = get_preceding_period_df(pred_history_all, "Last 7 days")
+        inc_7d = filter_by_date_range(inc_records_all, "Last 7 days", date_col="date")
 
-            tot_w = len(weekly_df)
-            hc_w = len(weekly_df[weekly_df["risk_level"].isin(["HIGH", "CRITICAL"])])
-            crit_w = len(weekly_df[weekly_df["risk_level"] == "CRITICAL"])
-            avg_ppe_w = weekly_df["ppe_compliance_pct"].mean() if not weekly_df.empty else 0.0
+        if pred_7d.empty:
+            render_empty_state(
+                title="No company evaluations recorded in the last 7 days",
+                message="Run predictive risk assessments in the Risk Predictor workspace to automatically populate this week's briefing.",
+                icon="▧",
+            )
+        else:
+            weekly_rep = generate_period_report(pred_7d, inc_7d, "Weekly Safety Brief", "Last 7 Days", df_pred_prev=pred_prev_7d)
+            w_kpis = weekly_rep["kpis"]
 
+            # Executive Summary Narrative
+            st.markdown(
+                f"""
+                <div class="cs-card-flat" style="border-left: 3px solid #5266eb; margin-bottom: 1.25rem;">
+                    <div class="cs-card-header">Executive Summary Narrative</div>
+                    <p style="color: #ededf3; font-size: 0.94rem; line-height: 1.6; margin: 0;">
+                        {weekly_rep['executive_summary']}
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            # KPI Grid
             c1, c2, c3, c4 = st.columns(4)
             with c1:
-                render_metric_card("Weekly Incidents", tot_w, f"{start_date.strftime('%d %b')} – {latest_date.strftime('%d %b')}", variant="accent")
+                render_metric_card("Weekly Assessments", w_kpis["total_assessments"], subtitle="Evaluated task volume", variant="accent")
             with c2:
-                render_metric_card("High / Critical", hc_w, "Requires pre-task focus", variant="high")
+                render_metric_card("High / Critical Count", w_kpis["high_critical_count"], subtitle=f"{w_kpis['high_critical_pct']:.1f}% of cohort", variant="high")
             with c3:
-                render_metric_card("Critical Risks", crit_w, "Immediate stop-work hazard", variant="critical")
+                render_metric_card("Critical Alerts", w_kpis["critical_risk_count"], subtitle="Stop-work reviews", variant="critical")
             with c4:
-                render_metric_card("Average PPE", f"{avg_ppe_w:.1f}%", "Observed weekly average", variant="medium")
+                render_metric_card("Average PPE Compliance", f"{w_kpis['avg_ppe_compliance']:.1f}%", subtitle="Crew compliance average", variant="medium")
 
             st.markdown("<div style='margin: 1.5rem 0;'></div>", unsafe_allow_html=True)
             w_col1, w_col2 = st.columns(2)
             with w_col1:
-                render_section_heading("Weekly Risk Distribution", "By risk severity")
-                w_risk_counts = (
-                    weekly_df["risk_level"]
-                    .value_counts()
-                    .reindex(["LOW", "MEDIUM", "HIGH", "CRITICAL"], fill_value=0)
-                    .reset_index()
-                )
-                w_risk_counts.columns = ["Risk Level", "Incidents"]
+                render_section_heading("Weekly Risk Distribution", "By risk severity level")
+                w_risk_df = pd.DataFrame({
+                    "Risk Level": list(w_kpis["risk_counts"].keys()),
+                    "Assessments": list(w_kpis["risk_counts"].values()),
+                })
                 fig_w = px.bar(
-                    w_risk_counts,
+                    w_risk_df,
                     x="Risk Level",
-                    y="Incidents",
+                    y="Assessments",
                     color="Risk Level",
                     color_discrete_map=RISK_COLOR_DISCRETE_MAP,
                 )
@@ -1349,68 +1477,203 @@ elif current_page == "Reports":
                 st.plotly_chart(fig_w, use_container_width=True)
 
             with w_col2:
-                render_section_heading("Priority Activities for Briefing", "Activities with most frequent hazards")
-                top_w_act = weekly_df["activity_type"].value_counts().head(5).reset_index()
-                top_w_act.columns = ["Activity", "Events"]
-                st.dataframe(top_w_act, use_container_width=True, hide_index=True)
+                render_section_heading("Priority Activities for Briefing", "Activities evaluated with high severity")
+                if not weekly_rep["activity_metrics"].empty:
+                    st.dataframe(weekly_rep["activity_metrics"], use_container_width=True, hide_index=True)
+                else:
+                    st.info("No activity breakdowns available.")
+
+            # Active Alerts in Period
+            if weekly_rep["alerts"]:
+                render_section_heading("Active Alerts Identified in Week", "Threshold escalation triggers")
+                for al in weekly_rep["alerts"]:
+                    render_alert_card(al)
+
+            # Recommended Action Checklist
+            render_section_heading("Operational Safety Action Checklist", "Actionable requirements for weekly standup")
+            for act_item in weekly_rep["recommended_actions"]:
+                st.markdown(
+                    f"""
+                    <div class="cs-action-item">
+                        <span class="cs-action-icon">✓</span>
+                        <span>{act_item}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    # --- TAB 2: MONTHLY SUMMARY ---
+    with report_tabs[1]:
+        render_section_heading("Monthly Safety Summary Report", "Company-wide monthly risk posture and trend comparison")
+        m_sel = st.selectbox(
+            "Select Evaluation Month:",
+            ["This month", "Previous month", "Last 30 days"],
+            index=0,
+            key="rep_m_sel",
+        )
+        pred_month = filter_by_date_range(pred_history_all, m_sel)
+        pred_prev_month = get_preceding_period_df(pred_history_all, m_sel)
+        inc_month = filter_by_date_range(inc_records_all, m_sel, date_col="date")
+
+        if pred_month.empty:
+            render_empty_state(
+                title=f"No company evaluations recorded for {m_sel}",
+                message="Monthly reports aggregate real site predictions. Select a populated month or log evaluations in Risk Predictor.",
+                icon="▧",
+            )
+        else:
+            monthly_rep = generate_period_report(pred_month, inc_month, f"Monthly Report ({m_sel})", m_sel, df_pred_prev=pred_prev_month)
+            m_kpis = monthly_rep["kpis"]
 
             st.markdown(
-                """
-                <div class="cs-card-flat">
-                    <div class="cs-card-header">Weekly Safety Briefing Notes</div>
-                    <p style="color: #ededf3; font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.5rem;">
-                        <strong>Focus Areas:</strong> Prioritize fall-arrest checks for elevated roof work and inspect all electrical
-                        junction enclosures prior to morning shift startup. Verify that all subcontract crews complete daily
-                        pre-task risk discussions.
+                f"""
+                <div class="cs-card-flat" style="border-left: 3px solid #5266eb; margin-bottom: 1.25rem;">
+                    <div class="cs-card-header">Monthly Executive Narrative</div>
+                    <p style="color: #ededf3; font-size: 0.94rem; line-height: 1.6; margin: 0;">
+                        {monthly_rep['executive_summary']}
                     </p>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-    with report_tabs[1]:
-        render_section_heading("Monthly Safety Summary", "Aggregated monthly performance metrics")
-        render_empty_state(
-            title="Monthly report generator ready",
-            message="Monthly reports consolidate site assessments, audit findings, and PPE compliance trends across all jobsite locations.",
-            icon="▧",
-        )
+            mc1, mc2, mc3, mc4 = st.columns(4)
+            with mc1:
+                render_metric_card("Monthly Assessments", m_kpis["total_assessments"], variant="accent")
+            with mc2:
+                render_metric_card("High/Critical %", f"{m_kpis['high_critical_pct']:.1f}%", variant="high")
+            with mc3:
+                render_metric_card("Avg Risk Score", f"{m_kpis['avg_risk_score']:.1f}", variant="default")
+            with mc4:
+                render_metric_card("Observed Avg PPE", f"{m_kpis['avg_ppe_compliance']:.1f}%", variant="medium")
 
+            if not monthly_rep["activity_metrics"].empty:
+                st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
+                render_section_heading("Monthly Activity Breakdown", "Evaluated risk index by task")
+                st.dataframe(monthly_rep["activity_metrics"], use_container_width=True, hide_index=True)
+
+    # --- TAB 3: CUSTOM DATE RANGE ---
     with report_tabs[2]:
-        render_section_heading("Custom Date Range Query", "Select custom start and end parameters")
-        r_col1, r_col2 = st.columns(2)
-        with r_col1:
-            st.date_input("Start Date", value=datetime.now(timezone.utc).date())
-        with r_col2:
-            st.date_input("End Date", value=datetime.now(timezone.utc).date())
-        render_empty_state(
-            title="Select parameters to generate custom report",
-            message="Adjust date filters above to isolate specific construction phases or weather event intervals.",
-            icon="📅",
-        )
+        render_section_heading("Custom Date Range Query Report", "Generate targeted safety intelligence for specific phases")
+        rc1, rc2 = st.columns(2)
+        with rc1:
+            c_start = st.date_input("Report Start Date", value=datetime.now(timezone.utc).date() - timedelta(days=14), key="rep_c_start")
+        with rc2:
+            c_end = st.date_input("Report End Date", value=datetime.now(timezone.utc).date(), key="rep_c_end")
 
+        if c_start > c_end:
+            st.warning("Start Date must be before or equal to End Date.")
+        else:
+            pred_custom = filter_by_date_range(pred_history_all, "Custom range", c_start, c_end)
+            inc_custom = filter_by_date_range(inc_records_all, "Custom range", c_start, c_end, date_col="date")
+
+            if pred_custom.empty:
+                render_empty_state(
+                    title="No assessments recorded in custom date window",
+                    message="Adjust start and end date parameters to encompass recorded site evaluations.",
+                    icon="📅",
+                )
+            else:
+                c_label = f"{c_start.strftime('%d %b %Y')} to {c_end.strftime('%d %b %Y')}"
+                custom_rep = generate_period_report(pred_custom, inc_custom, "Custom Period Safety Report", c_label)
+                ck = custom_rep["kpis"]
+
+                st.markdown(
+                    f"""
+                    <div class="cs-card-flat" style="border-left: 3px solid #5266eb; margin-bottom: 1.25rem;">
+                        <div class="cs-card-header">Custom Period Executive Summary</div>
+                        <p style="color: #ededf3; font-size: 0.94rem; line-height: 1.6; margin: 0;">
+                            {custom_rep['executive_summary']}
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                rk1, rk2, rk3, rk4 = st.columns(4)
+                with rk1:
+                    render_metric_card("Assessments in Window", ck["total_assessments"], variant="accent")
+                with rk2:
+                    render_metric_card("High/Critical Risks", ck["high_critical_count"], variant="high")
+                with rk3:
+                    render_metric_card("Average Risk Score", f"{ck['avg_risk_score']:.1f}", variant="default")
+                with rk4:
+                    render_metric_card("Observed Avg PPE", f"{ck['avg_ppe_compliance']:.1f}%", variant="medium")
+
+                if not custom_rep["activity_metrics"].empty:
+                    st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
+                    render_section_heading("Task Risk Ranking for Selected Window", "Sorted by average evaluated risk")
+                    st.dataframe(custom_rep["activity_metrics"], use_container_width=True, hide_index=True)
+
+    # --- TAB 4: SAFETY ALERTS CENTER ---
     with report_tabs[3]:
-        render_section_heading("Active Safety Alerts", "Automated hazard escalation triggers")
-        st.markdown(
-            """
-            <div class="cs-risk-banner high">
-                ⚠️ <strong>HIGH WIND WARNING</strong> — Forecast indicates gusts above 25 knots. Cease crane lifting and secure all elevated scaffold materials immediately.
-            </div>
-            <div class="cs-risk-banner medium">
-                ℹ️ <strong>PPE COMPLIANCE NOTICE</strong> — Excavation zones exhibited lower eye-protection compliance. Safety supervisors to conduct spot audits during afternoon shift.
-            </div>
-            """,
-            unsafe_allow_html=True,
+        render_section_heading("Active Safety Alerts Center", "Real-time automated threshold monitoring across company records")
+        
+        al_col_period, al_col_meta = st.columns([1.5, 2.5])
+        with al_col_period:
+            alert_period_choice = st.selectbox(
+                "Evaluation Period for Alerts:",
+                ["All time", "Last 7 days", "Last 30 days", "This month"],
+                index=1,
+                key="alert_period_sel",
+            )
+
+        pred_al = filter_by_date_range(pred_history_all, alert_period_choice)
+        pred_al_prev = get_preceding_period_df(pred_history_all, alert_period_choice)
+        inc_al = filter_by_date_range(inc_records_all, alert_period_choice, date_col="date")
+
+        detected_alerts = detect_safety_alerts(
+            pred_al,
+            inc_al,
+            period_label=alert_period_choice,
+            df_pred_prev=pred_al_prev,
         )
 
+        with al_col_meta:
+            highest_sev = detected_alerts[0]["severity"] if detected_alerts else "NONE"
+            m_a1, m_a2, m_a3 = st.columns(3)
+            with m_a1:
+                render_metric_card("Active Alerts", len(detected_alerts), variant="critical" if highest_sev == "CRITICAL" else ("high" if highest_sev == "HIGH" else "accent"))
+            with m_a2:
+                render_metric_card("Highest Severity", highest_sev, variant=highest_sev.lower() if highest_sev != "NONE" else "low")
+            with m_a3:
+                render_metric_card("Scope Evaluated", f"{len(pred_al)} records", variant="default")
+
+        st.markdown("<div style='margin: 1rem 0;'></div>", unsafe_allow_html=True)
+
+        if not detected_alerts:
+            render_empty_state(
+                title="🟢 No active safety alerts detected",
+                message=f"All evaluated safety metrics for {alert_period_choice} are within configured threshold standards. No critical spikes or repeated hazard escalations found.",
+                icon="🛡",
+            )
+        else:
+            render_section_heading("Detected Safety Escalation Alerts", f"{len(detected_alerts)} alert condition(s) triggered")
+            for al_item in detected_alerts:
+                render_alert_card(al_item)
+
+        # Configurable Centralized Thresholds Expander
+        with st.expander("⚙️ View Configured Alert Thresholds"):
+            st.caption("CENTRALIZED SAFETY THRESHOLD SPECIFICATION")
+            thresh_df = pd.DataFrame([
+                {"Threshold Key": "critical_count_threshold", "Configured Value": DEFAULT_ALERT_THRESHOLDS["critical_count_threshold"], "Operational Meaning": "Triggers CRITICAL alert when count of critical evaluations >= 2 in period."},
+                {"Threshold Key": "high_critical_pct_threshold", "Configured Value": f"{DEFAULT_ALERT_THRESHOLDS['high_critical_pct_threshold']}%", "Operational Meaning": "Triggers HIGH alert when High+Critical evaluations exceed 40.0% of cohort."},
+                {"Threshold Key": "risk_increase_pct_threshold", "Configured Value": f"+{DEFAULT_ALERT_THRESHOLDS['risk_increase_pct_threshold']}%", "Operational Meaning": "Triggers HIGH alert when period average risk increases by >= 15.0% vs prior period."},
+                {"Threshold Key": "ppe_compliance_min_threshold", "Configured Value": f"<={DEFAULT_ALERT_THRESHOLDS['ppe_compliance_min_threshold']}%", "Operational Meaning": "Triggers MEDIUM alert when observed PPE compliance drops below 80.0% standard."},
+                {"Threshold Key": "repeated_activity_threshold", "Configured Value": DEFAULT_ALERT_THRESHOLDS["repeated_activity_threshold"], "Operational Meaning": "Triggers HIGH alert when any single activity accumulates >= 3 High/Critical evaluations."},
+                {"Threshold Key": "severe_incident_threshold", "Configured Value": DEFAULT_ALERT_THRESHOLDS["severe_incident_threshold"], "Operational Meaning": "Triggers CRITICAL alert when >= 1 Severe or Lost-Time incident is logged in records."},
+            ])
+            st.dataframe(thresh_df, use_container_width=True, hide_index=True)
+
+    # --- TAB 5: EXPORTS ---
     with report_tabs[4]:
-        render_section_heading("Formal Export Center", "Download formatted safety data packages")
+        render_section_heading("Safety Data Export Center", "Download structured CSV records for audits and safety reviews")
         st.markdown(
             """
-            <div class="cs-card">
-                <div class="cs-card-header">Available Export Formats</div>
-                <p style="color: #c3c3cc; font-size: 0.9rem;">
-                    Safety Intelligence reports can be exported in structured formats for external audit, OSHA documentation, and joint safety committee review.
+            <div class="cs-card-flat" style="margin-bottom: 1rem;">
+                <div style="font-weight: 600; color: #ededf3; margin-bottom: 0.25rem;">Available Data Exports</div>
+                <p style="color: #c3c3cc; font-size: 0.88rem; line-height: 1.5; margin: 0;">
+                    Download verified benchmark datasets and company site prediction records in standard CSV format for external auditing, OSHA records, and joint safety committee review.
                 </p>
             </div>
             """,
@@ -1420,9 +1683,9 @@ elif current_page == "Reports":
         with exp_col1:
             if data_loaded:
                 st.download_button(
-                    label="⬇ Download Complete Incident Dataset (CSV)",
+                    label="⬇ Download Historical Benchmark Dataset (500 Records)",
                     data=incidents_df.to_csv(index=False).encode("utf-8"),
-                    file_name="incidents_export.csv",
+                    file_name="historical_incidents_benchmark.csv",
                     mime="text/csv",
                     type="primary",
                     use_container_width=True,
@@ -1431,15 +1694,15 @@ elif current_page == "Reports":
             site_hist = load_prediction_history()
             if not site_hist.empty:
                 st.download_button(
-                    label="⬇ Download Site Prediction History (CSV)",
+                    label=f"⬇ Download Company Prediction History ({len(site_hist)} Records)",
                     data=site_hist.to_csv(index=False).encode("utf-8"),
-                    file_name="site_prediction_history.csv",
+                    file_name="company_prediction_history.csv",
                     mime="text/csv",
                     type="secondary",
                     use_container_width=True,
                 )
             else:
-                st.button("📄 Export Formal PDF Report (Preparing)", disabled=True, use_container_width=True)
+                st.info("Company prediction history is currently empty. Run assessments in Risk Predictor to enable export.")
 
 
 # ==============================================================================
@@ -1494,119 +1757,89 @@ elif current_page == "Safety":
             st.checkbox(esc, value=False, key=f"chk_esc_{esc[:20]}")
 
     with safety_tabs[1]:
-        render_section_heading("Jobsite Pre-Work Safety Checklists", "Standard digital audit templates")
-        st.markdown(
-            """
-            <div class="cs-card-flat">
-                <div class="cs-card-header">Daily General Jobsite Audit</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        render_section_heading("Jobsite Pre-Work Safety Verification Checklist", "Task-specific verification criteria before commencement")
+        
+        chk_act = st.selectbox(
+            "Select Activity for Pre-Work Verification:",
+            [
+                "Working at Height", "Electrical Work", "Scaffolding", "Excavation",
+                "Lifting", "Welding", "Confined Space", "Material Handling",
+                "Vehicle Movement", "Housekeeping"
+            ],
+            key="chk_act_selector",
         )
-        st.checkbox("Emergency egress routes and fire extinguishers unobstructed", value=True)
-        st.checkbox("All workers equipped with ANSI-approved hard hats, safety glasses, and steel-toe boots", value=True)
-        st.checkbox("First aid kits fully stocked and emergency contact numbers posted", value=True)
-        st.checkbox("Weather forecast verified against planned heavy lifting and exterior operations", value=False)
-        st.checkbox("Hot work permits issued and 30-minute fire watch assigned for welding tasks", value=False)
+
+        base_audits = [
+            "Mandatory PPE verified for all crew members (Hard hat, safety glasses, steel-toe boots, high-vis vest).",
+            "Job Hazard Analysis (JHA) reviewed with entire crew during morning briefing.",
+            "Work zone perimeter demarcated with physical barriers or warning tape.",
+            "First aid kit and emergency response contact numbers verified accessible.",
+        ]
+        task_specific_audits = get_recommendations(chk_act)
+        all_audits = base_audits + task_specific_audits
+
+        st.caption(f"VERIFICATION CRITERIA FOR: {chk_act.upper()}")
+        checked_count = 0
+        for i, audit_item in enumerate(all_audits):
+            if st.checkbox(f"{i+1}. {audit_item}", value=False, key=f"dyn_chk_{chk_act}_{i}"):
+                checked_count += 1
+
+        st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+        pct_done = (checked_count / len(all_audits) * 100) if all_audits else 0.0
+        
+        c_stat1, c_stat2 = st.columns([1.5, 2.5])
+        with c_stat1:
+            render_metric_card("Checklist Completion", f"{checked_count} of {len(all_audits)}", subtitle=f"{pct_done:.0f}% verified", variant="low" if pct_done == 100 else ("medium" if pct_done >= 50 else "default"))
+        with c_stat2:
+            if pct_done == 100:
+                st.success("✅ All pre-work verification controls confirmed. Safe to commence task operations.")
+            else:
+                st.info(f"⏳ {len(all_audits) - checked_count} safety control(s) pending field verification before sign-off.")
 
     with safety_tabs[2]:
         render_section_heading("Toolbox Talks Briefing Repository", "Standard 5-minute pre-shift briefing templates")
-        for act in ["Working at Height", "Electrical Work", "Scaffolding", "Excavation", "Lifting"]:
-            with st.expander(f"🗣 {act} — Toolbox Talk Topics", expanded=(act == "Working at Height")):
+        for act in [
+            "Working at Height", "Electrical Work", "Scaffolding", "Excavation",
+            "Lifting", "Welding", "Confined Space", "Material Handling",
+            "Vehicle Movement", "Housekeeping"
+        ]:
+            with st.expander(f"🗣 {act} — Pre-Shift Briefing Topics", expanded=(act == "Working at Height")):
                 topics = get_toolbox_topics(act)
                 for t in topics:
                     st.markdown(f"• **{t}**")
 
 
 # ==============================================================================
-# 7. AI SAFETY
+# 7. AI SAFETY (HONEST FUTURE RELEASE STATUS)
 # ==============================================================================
 
 elif current_page == "AI Safety":
     render_page_hero(
         title="AI Safety Intelligence",
-        subtitle="Generative safety analysis, automated hazard explanations, and AI-driven toolbox briefings (Preview).",
+        subtitle="Generative safety analysis, automated hazard explanations, and AI-driven toolbox briefings.",
         tagline="AI SAFETY CO-PILOT",
     )
 
     st.markdown(
         """
-        <div class="cs-card">
-            <div class="cs-card-header">
-                <span>✦ AI Safety Co-Pilot Architecture</span>
-                <span class="cs-badge cs-badge-medium">Phase 3 Preview</span>
+        <div class="cs-card-flat" style="border-left: 3px solid #5266eb; padding: 2rem; margin-top: 1rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.75rem;">✦</span>
+                    <strong style="color: #ededf3; font-size: 1.25rem;">AI Safety Intelligence Workspace</strong>
+                </div>
+                <span class="cs-badge cs-badge-medium" style="font-size: 0.85rem;">Scheduled for Future Release</span>
             </div>
-            <p style="color: #c3c3cc; font-size: 0.92rem; line-height: 1.6;">
-                The AI Safety Intelligence module will integrate deep contextual hazard models with project documents
-                to deliver real-time risk explanations, automated weekly executive briefs, and instant regulatory guidance.
+            <p style="color: #ededf3; font-size: 0.98rem; line-height: 1.6; margin-bottom: 1rem;">
+                AI Safety Intelligence features will be introduced in a future release.
+            </p>
+            <p style="color: #c3c3cc; font-size: 0.9rem; line-height: 1.6; margin: 0;">
+                This workspace will provide AI-assisted hazard synthesis, automated compliance auditing, natural-language briefing generation, and contextual risk explanations powered by generative AI models.
             </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
-    ai_tab1, ai_tab2, ai_tab3, ai_tab4 = st.tabs([
-        "AI Safety Analyst", "AI Risk Explanation", "AI Weekly Safety Brief", "AI Recommendations"
-    ])
-
-    with ai_tab1:
-        render_section_heading("AI Safety Analyst Query Interface", "Interactive natural-language hazard assistant")
-        sample_prompt = st.selectbox(
-            "Select an AI Safety Query Template:",
-            [
-                "Analyze safety risks for multi-crane tandem lift near public roadway",
-                "Generate custom toolbox briefing for steel erection in freezing rain",
-                "Explain correlation between night shifts and PPE compliance drops",
-                "Review OSHA Subpart M fall protection compliance requirements for steep pitch roofs",
-            ],
-        )
-        query_input = st.text_input("Or enter a custom jobsite hazard query:", value=sample_prompt)
-        ai_run_btn = st.button("✦ Generate AI Safety Analysis (Preview)", type="primary")
-
-        if ai_run_btn:
-            st.markdown(
-                f"""
-                <div class="cs-card-flat" style="border-left: 3px solid #5266eb;">
-                    <div class="cs-card-header">
-                        <span>✦ AI Safety Analyst Response (Preview Mode)</span>
-                        <span style="font-family: monospace; font-size: 0.78rem; color: #8e8e9c;">Model: Safety-GPT / Engine v2.4</span>
-                    </div>
-                    <p style="color: #ededf3; font-size: 0.92rem; line-height: 1.6;">
-                        <strong>Hazard Synthesis:</strong> For <em>"{query_input}"</em>, historical benchmark data highlights high severity
-                        vulnerabilities related to load-line interference, ground bearing capacity under outriggers, and pedestrian barrier failure.
-                    </p>
-                    <p style="color: #c3c3cc; font-size: 0.88rem; line-height: 1.6;">
-                        <strong>Recommended Controls:</strong> (1) Implement engineered lift plan verified by PE; (2) Enforce 1.5x load radius exclusion zone with physical barricades;
-                        (3) Appoint dedicated single-channel radio rigger; (4) Pre-check ground compaction with geotechnical logs.
-                    </p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-    with ai_tab2:
-        render_section_heading("AI Multi-Modal Risk Explanation", "Model explainability and causality engine")
-        render_empty_state(
-            title="AI Explanation Engine Preview",
-            message="Translates machine learning feature importance into plain-language safety engineering recommendations for superintendents.",
-            icon="✦",
-        )
-
-    with ai_tab3:
-        render_section_heading("AI Automated Weekly Safety Brief", "One-click safety briefing generation")
-        render_empty_state(
-            title="Automated Briefing Generator Preview",
-            message="Synthesizes weekly incidents and planned tasks into concise bullet points for morning standups.",
-            icon="🗣",
-        )
-
-    with ai_tab4:
-        render_section_heading("AI Preventive Recommendation Engine", "Dynamic rule & pattern discovery")
-        render_empty_state(
-            title="Dynamic Recommendations Preview",
-            message="Learns jobsite-specific hazard patterns to recommend preventive adjustments prior to shift start.",
-            icon="🛡",
-        )
 
 
 # ==============================================================================
