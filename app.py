@@ -54,8 +54,10 @@ from src.ui.components import (
     render_empty_state,
     render_footer,
     render_global_header,
+    render_magnetic_hero_background,
     render_metric_card,
     render_page_hero,
+    render_pixel_snow_background,
     render_project_card,
     render_risk_badge,
     render_section_heading,
@@ -102,6 +104,10 @@ if "last_prediction_result" not in st.session_state:
 # Filter state persistence for Records
 if "records_filter_reset" not in st.session_state:
     st.session_state.records_filter_reset = 0
+
+# Experimental Overview Background Selector ("Pixel Snow" or "Magnetic Hero")
+if "overview_bg_effect" not in st.session_state:
+    st.session_state.overview_bg_effect = "Pixel Snow"
 
 # ==============================================================================
 # DATA LOADING HELPERS
@@ -250,6 +256,9 @@ def render_alert_card(alert: Dict[str, Any]) -> None:
 inject_mercury_css()
 render_global_header(current_project=st.session_state.selected_project)
 current_page = render_top_navigation()
+
+# Interactive Pixel Snow background (Active globally on all pages)
+render_pixel_snow_background(active=True)
 
 
 # ==============================================================================

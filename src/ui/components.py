@@ -2,6 +2,7 @@
 
 from typing import Any, List, Optional
 import streamlit as st
+import streamlit.components.v1 as st_components
 from src.ui.theme import (
     COLOR_ACCENT_COBALT,
     COLOR_TEXT_PRIMARY,
@@ -204,3 +205,430 @@ def render_footer() -> None:
         '</div>'
     )
     st.markdown(html, unsafe_allow_html=True)
+
+
+def render_pixel_snow_background(active: bool = True) -> None:
+    """Render React Bits-inspired interactive Pixel Snow background effect on the Overview page."""
+    if not active:
+        cleanup_script = """
+        <!DOCTYPE html>
+        <html>
+        <head><style>body { margin: 0; padding: 0; display: none; }</style></head>
+        <body>
+        <script>
+        (function() {
+            try {
+                const parentDoc = window.parent ? window.parent.document : document;
+                const canvas = parentDoc.getElementById('rf-pixel-snow-canvas');
+                if (canvas) {
+                    canvas.style.display = 'none';
+                }
+            } catch(e) {}
+        })();
+        </script>
+        </body>
+        </html>
+        """
+        st_components.html(cleanup_script, height=0)
+        return
+
+    pixel_snow_html = """
+    <!DOCTYPE html>
+    <html>
+    <head><style>body { margin: 0; padding: 0; overflow: hidden; background: transparent; }</style></head>
+    <body>
+    <script>
+    (function() {
+        try {
+            const parentDoc = window.parent ? window.parent.document : document;
+            const parentWin = window.parent || window;
+
+            let canvas = parentDoc.getElementById('rf-pixel-snow-canvas');
+            if (!canvas) {
+                canvas = parentDoc.createElement('canvas');
+                canvas.id = 'rf-pixel-snow-canvas';
+                canvas.style.position = 'fixed';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.width = '100vw';
+                canvas.style.height = '100vh';
+                canvas.style.pointerEvents = 'none';
+                canvas.style.zIndex = '0';
+                canvas.style.opacity = '0.72';
+                parentDoc.body.appendChild(canvas);
+            }
+            canvas.style.display = 'block';
+
+            // Ensure magnetic experiment canvas is hidden
+            const magCanvas = parentDoc.getElementById('rf-magnetic-hero-canvas');
+            if (magCanvas) magCanvas.style.display = 'none';
+
+            const ctx = canvas.getContext('2d');
+            let width = (canvas.width = parentWin.innerWidth || 1200);
+            let height = (canvas.height = parentWin.innerHeight || 800);
+
+            function resize() {
+                width = canvas.width = parentWin.innerWidth || 1200;
+                height = canvas.height = parentWin.innerHeight || 800;
+            }
+            parentWin.addEventListener('resize', resize);
+
+            // Create pixel snow particle collection (slightly increased particle density)
+            const PARTICLE_COUNT = Math.min(225, Math.max(110, Math.floor(width / 8.2)));
+            const particles = [];
+
+            // Construction tech color palette: soft white, technical slate, electric cyan, soft cobalt
+            const COLORS = [
+                'rgba(248, 250, 252, ', // Crisp ivory / soft white
+                'rgba(148, 163, 184, ', // Technical slate
+                'rgba(56, 189, 248, ',  // Electric cyan
+                'rgba(59, 130, 246, '   // Cobalt blue
+            ];
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const depth = Math.random() * 0.8 + 0.2; // 0.2 (far) to 1.0 (near)
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    depth: depth,
+                    size: Math.floor(depth * 3.5 + 1.5), // 2px to 5px square pixels
+                    baseSpeedY: depth * 0.75 + 0.35,     // Downward drift speed
+                    vx: 0,
+                    vy: 0,
+                    swayFreq: Math.random() * 0.02 + 0.01,
+                    swayAmp: Math.random() * 0.6 + 0.2,
+                    phase: Math.random() * Math.PI * 2,
+                    colorPrefix: COLORS[Math.floor(Math.random() * COLORS.length)],
+                    baseAlpha: depth * 0.45 + 0.15
+                });
+            }
+
+            let mouseX = -9999;
+            let mouseY = -9999;
+            let targetMouseX = -9999;
+            let targetMouseY = -9999;
+
+            parentWin.addEventListener('mousemove', function(e) {
+                targetMouseX = e.clientX;
+                targetMouseY = e.clientY;
+            });
+
+            parentWin.addEventListener('mouseleave', function() {
+                targetMouseX = -9999;
+                targetMouseY = -9999;
+            });
+
+            let time = 0;
+
+            function animate() {
+                if (canvas.style.display === 'none') return;
+
+                ctx.clearRect(0, 0, width, height);
+                time += 0.02;
+
+                // Smooth cursor interpolation
+                if (targetMouseX > -5000) {
+                    if (mouseX < -5000) {
+                        mouseX = targetMouseX;
+                        mouseY = targetMouseY;
+                    } else {
+                        mouseX += (targetMouseX - mouseX) * 0.16;
+                        mouseY += (targetMouseY - mouseY) * 0.16;
+                    }
+                } else {
+                    mouseX = -9999;
+                    mouseY = -9999;
+                }
+
+                // Slightly enhanced interactive deflection radius and smooth responsive force
+                const interactionRadius = 195;
+                const interactionRadiusSq = interactionRadius * interactionRadius;
+
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+
+                    // Base natural downward pixel motion with gentle sway
+                    const sway = Math.sin(time * p.swayFreq + p.phase) * p.swayAmp;
+                    p.y += p.baseSpeedY + p.vy;
+                    p.x += sway + p.vx;
+
+                    // Enhanced interactive mouse deflection with natural fluid lift
+                    if (mouseX > -5000) {
+                        const dx = p.x - mouseX;
+                        const dy = p.y - mouseY;
+                        const distSq = dx * dx + dy * dy;
+
+                        if (distSq < interactionRadiusSq && distSq > 4) {
+                            const dist = Math.sqrt(distSq);
+                            const normDist = dist / interactionRadius;
+                            const force = (1 - normDist) * (p.depth * 4.6);
+                            const angle = Math.atan2(dy, dx);
+
+                            // Smooth deflection push + subtle vortex lift
+                            p.vx += Math.cos(angle) * force * 0.90;
+                            p.vy += (Math.sin(angle) * force * 0.90) - force * 0.32;
+                        }
+                    }
+
+                    // Natural velocity damping
+                    p.vx *= 0.92;
+                    p.vy *= 0.92;
+
+                    // Wrap-around screen bounds
+                    if (p.y > height + 10) {
+                        p.y = -10;
+                        p.x = Math.random() * width;
+                    } else if (p.y < -15) {
+                        p.y = height + 5;
+                    }
+                    if (p.x > width + 10) {
+                        p.x = -10;
+                    } else if (p.x < -10) {
+                        p.x = width + 10;
+                    }
+
+                    // Render crisp square pixel particle
+                    const currentAlpha = Math.min(0.88, Math.max(0.08, p.baseAlpha + Math.abs(p.vx + p.vy) * 0.12));
+                    ctx.fillStyle = p.colorPrefix + currentAlpha + ')';
+                    ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+                }
+
+                parentWin._rfPixelSnowFrame = requestAnimationFrame(animate);
+            }
+
+            if (parentWin._rfPixelSnowFrame) {
+                cancelAnimationFrame(parentWin._rfPixelSnowFrame);
+            }
+            animate();
+        } catch(e) {}
+    })();
+    </script>
+    </body>
+    </html>
+    """
+    st_components.html(pixel_snow_html, height=0)
+
+
+def render_magnetic_hero_background(active: bool = True) -> None:
+    """Render Shaders.com Magnetic Hero-inspired interactive magnetic particle field on Overview page."""
+    if not active:
+        cleanup_script = """
+        <!DOCTYPE html>
+        <html>
+        <head><style>body { margin: 0; padding: 0; display: none; }</style></head>
+        <body>
+        <script>
+        (function() {
+            try {
+                const parentDoc = window.parent ? window.parent.document : document;
+                const canvas = parentDoc.getElementById('rf-magnetic-hero-canvas');
+                if (canvas) {
+                    canvas.style.display = 'none';
+                }
+            } catch(e) {}
+        })();
+        </script>
+        </body>
+        </html>
+        """
+        st_components.html(cleanup_script, height=0)
+        return
+
+    magnetic_hero_html = """
+    <!DOCTYPE html>
+    <html>
+    <head><style>body { margin: 0; padding: 0; overflow: hidden; background: transparent; }</style></head>
+    <body>
+    <script>
+    (function() {
+        try {
+            const parentDoc = window.parent ? window.parent.document : document;
+            const parentWin = window.parent || window;
+
+            let canvas = parentDoc.getElementById('rf-magnetic-hero-canvas');
+            if (!canvas) {
+                canvas = parentDoc.createElement('canvas');
+                canvas.id = 'rf-magnetic-hero-canvas';
+                canvas.style.position = 'fixed';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.width = '100vw';
+                canvas.style.height = '100vh';
+                canvas.style.pointerEvents = 'none';
+                canvas.style.zIndex = '0';
+                canvas.style.opacity = '0.75';
+                parentDoc.body.appendChild(canvas);
+            }
+            canvas.style.display = 'block';
+
+            const ctx = canvas.getContext('2d');
+            let width = (canvas.width = parentWin.innerWidth || 1200);
+            let height = (canvas.height = parentWin.innerHeight || 800);
+
+            function resize() {
+                width = canvas.width = parentWin.innerWidth || 1200;
+                height = canvas.height = parentWin.innerHeight || 800;
+                initGrid();
+            }
+            parentWin.addEventListener('resize', resize);
+
+            let particles = [];
+
+            function initGrid() {
+                particles = [];
+                // Calculate grid spacing based on viewport
+                const spacing = Math.max(28, Math.min(42, Math.floor(Math.sqrt((width * height) / 600))));
+                const cols = Math.floor(width / spacing) + 2;
+                const rows = Math.floor(height / spacing) + 2;
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const jitterX = (Math.random() - 0.5) * (spacing * 0.45);
+                        const jitterY = (Math.random() - 0.5) * (spacing * 0.45);
+                        const ox = c * spacing + jitterX;
+                        const oy = r * spacing + jitterY;
+
+                        particles.push({
+                            x: ox,
+                            y: oy,
+                            originX: ox,
+                            originY: oy,
+                            vx: 0,
+                            vy: 0,
+                            baseRadius: Math.random() * 0.8 + 1.2,
+                            phase: Math.random() * Math.PI * 2,
+                            idleFreq: Math.random() * 0.015 + 0.008,
+                            idleAmp: Math.random() * 0.4 + 0.1
+                        });
+                    }
+                }
+            }
+
+            initGrid();
+
+            let mouseX = -9999;
+            let mouseY = -9999;
+            let targetMouseX = -9999;
+            let targetMouseY = -9999;
+
+            parentWin.addEventListener('mousemove', function(e) {
+                targetMouseX = e.clientX;
+                targetMouseY = e.clientY;
+            });
+
+            parentWin.addEventListener('mouseleave', function() {
+                targetMouseX = -9999;
+                targetMouseY = -9999;
+            });
+
+            let time = 0;
+
+            function animate() {
+                if (canvas.style.display === 'none') return;
+
+                ctx.clearRect(0, 0, width, height);
+                time += 0.02;
+
+                // Smooth cursor interpolation
+                if (targetMouseX > -5000) {
+                    if (mouseX < -5000) {
+                        mouseX = targetMouseX;
+                        mouseY = targetMouseY;
+                    } else {
+                        mouseX += (targetMouseX - mouseX) * 0.18;
+                        mouseY += (targetMouseY - mouseY) * 0.18;
+                    }
+                } else {
+                    mouseX = -9999;
+                    mouseY = -9999;
+                }
+
+                const magneticRadius = 230;
+                const magneticRadiusSq = magneticRadius * magneticRadius;
+                const springK = 0.045; // Spring return stiffness
+                const damping = 0.87;  // Viscous damping
+
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+
+                    // Calm idle breathing movement
+                    const idleX = Math.cos(time * p.idleFreq + p.phase) * p.idleAmp;
+                    const idleY = Math.sin(time * p.idleFreq + p.phase) * p.idleAmp;
+
+                    // Physical magnetic attraction + vortex flow force
+                    if (mouseX > -5000) {
+                        const dx = mouseX - p.x;
+                        const dy = mouseY - p.y;
+                        const distSq = dx * dx + dy * dy;
+
+                        if (distSq < magneticRadiusSq && distSq > 2) {
+                            const dist = Math.sqrt(distSq);
+                            const normDist = dist / magneticRadius;
+                            // Smooth non-linear magnetic pull curve
+                            const force = Math.pow(1 - normDist, 1.3) * 8.2;
+                            const angle = Math.atan2(dy, dx);
+
+                            // Strong attraction toward cursor with fluid rotational swirl
+                            p.vx += Math.cos(angle) * force * 0.96 - Math.sin(angle) * force * 0.28;
+                            p.vy += Math.sin(angle) * force * 0.96 + Math.cos(angle) * force * 0.28;
+                        }
+                    }
+
+                    // Hooke's Law spring force back to origin equilibrium
+                    const homeDx = (p.originX + idleX) - p.x;
+                    const homeDy = (p.originY + idleY) - p.y;
+                    p.vx += homeDx * springK;
+                    p.vy += homeDy * springK;
+
+                    // Apply damping
+                    p.vx *= damping;
+                    p.vy *= damping;
+
+                    // Update position
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // Render particle with dynamic excitation shimmer
+                    const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+                    let color;
+                    let radius = p.baseRadius;
+
+                    if (speed > 2.0) {
+                        // High magnetic excitation: construction amber / gold spark
+                        color = 'rgba(245, 158, 11, ' + Math.min(0.95, 0.60 + speed * 0.1) + ')';
+                        radius += 1.6;
+                    } else if (speed > 0.7) {
+                        // Medium excitation: electric cyan glow
+                        color = 'rgba(56, 189, 248, ' + Math.min(0.88, 0.45 + speed * 0.16) + ')';
+                        radius += 1.0;
+                    } else if (speed > 0.25) {
+                        // Subtle excitation: soft cobalt
+                        color = 'rgba(96, 165, 250, ' + Math.min(0.70, 0.28 + speed * 0.22) + ')';
+                        radius += 0.4;
+                    } else {
+                        // Resting state: calm technical slate / ivory
+                        color = 'rgba(148, 163, 184, 0.35)';
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                }
+
+                parentWin._rfMagneticHeroFrame = requestAnimationFrame(animate);
+            }
+
+            if (parentWin._rfMagneticHeroFrame) {
+                cancelAnimationFrame(parentWin._rfMagneticHeroFrame);
+            }
+            animate();
+        } catch(e) {}
+    })();
+    </script>
+    </body>
+    </html>
+    """
+    st_components.html(magnetic_hero_html, height=0)
+
+
