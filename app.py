@@ -279,59 +279,81 @@ if current_page == "Overview":
 
         site_history_raw = load_prediction_history()
 
+        site_img_file = BASE_DIR / "assets" / "construction_site.jpg"
+
         if site_history_raw.empty:
-            render_empty_state(
-                title="No site activity recorded yet",
-                message=(
-                    "Run a risk assessment in Risk Predictor to begin building your site's "
-                    "safety intelligence and operational risk history."
-                ),
-                icon="🦺",
-            )
+            ov_col_empty, ov_col_img = st.columns([1, 1])
+            with ov_col_empty:
+                render_empty_state(
+                    title="No site activity recorded yet",
+                    message=(
+                        "Run a risk assessment in Risk Predictor to begin building your site's "
+                        "safety intelligence and operational risk history."
+                    ),
+                    icon="🦺",
+                )
+            with ov_col_img:
+                if site_img_file.exists():
+                    st.image(str(site_img_file), use_container_width=True)
         else:
             # Date Filter Control
             period, s_date, e_date = render_date_filter_control("ov_site")
             site_history = filter_by_date_range(site_history_raw, period, s_date, e_date)
 
             if site_history.empty:
-                render_empty_state(
-                    title="No assessments found for selected period",
-                    message="No site evaluations match the current date filter. Select 'All time' or widen the date range.",
-                    icon="📅",
-                )
+                ov_col_empty, ov_col_img = st.columns([1, 1])
+                with ov_col_empty:
+                    render_empty_state(
+                        title="No assessments found for selected period",
+                        message="No site evaluations match the current date filter. Select 'All time' or widen the date range.",
+                        icon="📅",
+                    )
+                with ov_col_img:
+                    if site_img_file.exists():
+                        st.image(str(site_img_file), use_container_width=True)
             else:
                 kpis = calculate_site_kpis(site_history)
 
-                # Primary KPI row
-                col1, col2, col3, col4 = st.columns(4)
-                with col1:
-                    render_metric_card(
-                        "Total Assessments",
-                        kpis["total_assessments"],
-                        subtitle="Recorded site evaluations",
-                        variant="accent",
-                    )
-                with col2:
-                    render_metric_card(
-                        "High / Critical Risks",
-                        kpis["high_critical_count"],
-                        subtitle=f"{kpis['high_critical_pct']:.1f}% of assessments",
-                        variant="high",
-                    )
-                with col3:
-                    render_metric_card(
-                        "Critical Alerts",
-                        kpis["critical_risk_count"],
-                        subtitle="Immediate stop-work hazard",
-                        variant="critical",
-                    )
-                with col4:
-                    render_metric_card(
-                        "Observed Avg PPE",
-                        f"{kpis['avg_ppe_compliance']:.1f}%",
-                        subtitle="Observed crew compliance",
-                        variant="medium",
-                    )
+                # Hero 2-Column Section: Left = Primary KPIs, Right = Construction Site Image (~50% width)
+                ov_col_left, ov_col_img = st.columns([1, 1])
+                with ov_col_left:
+                    render_section_heading("Site Safety Telemetry", f"Real-time analytics for {kpis['total_assessments']} assessments")
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        render_metric_card(
+                            "Total Assessments",
+                            kpis["total_assessments"],
+                            subtitle="Recorded site evaluations",
+                            variant="accent",
+                        )
+                    with c2:
+                        render_metric_card(
+                            "High / Critical Risks",
+                            kpis["high_critical_count"],
+                            subtitle=f"{kpis['high_critical_pct']:.1f}% of assessments",
+                            variant="high",
+                        )
+                    
+                    st.markdown("<div style='margin: 0.6rem 0;'></div>", unsafe_allow_html=True)
+                    c3, c4 = st.columns(2)
+                    with c3:
+                        render_metric_card(
+                            "Critical Alerts",
+                            kpis["critical_risk_count"],
+                            subtitle="Immediate stop-work hazard",
+                            variant="critical",
+                        )
+                    with c4:
+                        render_metric_card(
+                            "Observed Avg PPE",
+                            f"{kpis['avg_ppe_compliance']:.1f}%",
+                            subtitle="Observed crew compliance",
+                            variant="medium",
+                        )
+
+                with ov_col_img:
+                    if site_img_file.exists():
+                        st.image(str(site_img_file), use_container_width=True)
 
                 # Secondary KPI row
                 st.markdown("<div style='margin: 0.75rem 0;'></div>", unsafe_allow_html=True)
@@ -574,43 +596,52 @@ elif current_page == "Risk Predictor":
         weather_options = ["Clear", "Rain", "Adverse"]
         shift_options = ["Day", "Night"]
 
-    st.markdown('<div class="cs-card">', unsafe_allow_html=True)
-    render_section_heading("Planned Activity Parameters", "Input task details for pre-work risk calculation")
+    worker_img_file = BASE_DIR / "assets" / "worker_ppe.jpg"
 
-    form_col1, form_col2 = st.columns(2)
+    pred_col_left, pred_col_right = st.columns([1.12, 0.88])
 
-    with form_col1:
-        st.caption("1. ACTIVITY & LOCATION")
-        activity_type = st.selectbox("Activity Type", activity_options, index=0)
-        location_type = st.selectbox("Location Type", location_options, index=0)
+    with pred_col_left:
+        st.markdown('<div class="cs-card">', unsafe_allow_html=True)
+        render_section_heading("Planned Activity Parameters", "Input task details for pre-work risk calculation")
 
-        st.caption("2. ENVIRONMENTAL CONDITIONS")
-        weather = st.selectbox("Weather Condition", weather_options, index=0)
-        shift = st.selectbox("Operational Shift", shift_options, index=0)
+        form_col1, form_col2 = st.columns(2)
 
-    with form_col2:
-        st.caption("3. CREW DYNAMICS & COMPLIANCE")
-        crew_size = st.number_input("Crew Size (Workers)", min_value=1, max_value=120, value=6, step=1)
-        ppe_compliance_pct = st.slider("Observed PPE Compliance (%)", min_value=0, max_value=100, value=85, step=1)
-        previous_incidents_30d = st.number_input("Site Incidents in Last 30 Days", min_value=0, max_value=20, value=0, step=1)
+        with form_col1:
+            st.caption("1. ACTIVITY & LOCATION")
+            activity_type = st.selectbox("Activity Type", activity_options, index=0)
+            location_type = st.selectbox("Location Type", location_options, index=0)
 
-        st.caption("4. PROJECT CONTEXT & HAZARDS")
-        project_site = st.text_input(
-            "Project / Jobsite Name",
-            value=st.session_state.selected_project,
-            placeholder="e.g. Metro Tower — Level 14",
+            st.caption("2. ENVIRONMENTAL CONDITIONS")
+            weather = st.selectbox("Weather Condition", weather_options, index=0)
+            shift = st.selectbox("Operational Shift", shift_options, index=0)
+
+        with form_col2:
+            st.caption("3. CREW DYNAMICS & COMPLIANCE")
+            crew_size = st.number_input("Crew Size (Workers)", min_value=1, max_value=120, value=6, step=1)
+            ppe_compliance_pct = st.slider("Observed PPE Compliance (%)", min_value=0, max_value=100, value=85, step=1)
+            previous_incidents_30d = st.number_input("Site Incidents in Last 30 Days", min_value=0, max_value=20, value=0, step=1)
+
+            st.caption("4. PROJECT CONTEXT & HAZARDS")
+            project_site = st.text_input(
+                "Project / Jobsite Name",
+                value=st.session_state.selected_project,
+                placeholder="e.g. Metro Tower — Level 14",
+            )
+
+        description = st.text_area(
+            "Hazard & Task Description",
+            value="",
+            placeholder="e.g., Installing exterior curtain-wall panels on perimeter edge without temporary guardrails.",
+            height=80,
         )
 
-    description = st.text_area(
-        "Hazard & Task Description",
-        value="",
-        placeholder="e.g., Installing exterior curtain-wall panels on perimeter edge without temporary guardrails.",
-        height=80,
-    )
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+        predict_btn = st.button("◈ Run Safety Risk Assessment", type="primary", use_container_width=True)
 
-    predict_btn = st.button("◈ Run Safety Risk Assessment", type="primary", use_container_width=True)
+    with pred_col_right:
+        if worker_img_file.exists():
+            st.image(str(worker_img_file), use_container_width=True)
 
     if predict_btn:
         activity_data = {
