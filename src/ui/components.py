@@ -62,11 +62,24 @@ NAV_WEIGHTS = [1.0, 1.35, 1.05, 0.95, 0.95, 0.9, 0.98]
 
 
 def render_top_navigation() -> str:
-    """Render the floating Command Center navigation bar."""
+    """Render the React Bits Gooey Nav Command Center navigation bar."""
+    # Synchronize with query parameters on first load if present
     if "current_page" not in st.session_state:
-        st.session_state.current_page = PAGES[0]
+        query_page = st.query_params.get("page")
+        if query_page:
+            query_page_clean = query_page.replace("+", " ").strip()
+            matched = False
+            for page_name in PAGES:
+                if page_name.lower() == query_page_clean.lower():
+                    st.session_state.current_page = page_name
+                    matched = True
+                    break
+            if not matched:
+                st.session_state.current_page = PAGES[0]
+        else:
+            st.session_state.current_page = PAGES[0]
 
-    st.markdown('<div class="cs-command-nav-anchor"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="cs-command-nav-anchor cs-gooey-nav-anchor"></div>', unsafe_allow_html=True)
     with st.container():
         cols = st.columns(NAV_WEIGHTS)
         for idx, page_name in enumerate(PAGES):
@@ -80,9 +93,155 @@ def render_top_navigation() -> str:
                     type="primary" if is_active else "secondary",
                 ):
                     st.session_state.current_page = page_name
+                    try:
+                        st.query_params["page"] = page_name
+                    except Exception:
+                        pass
                     st.rerun()
 
+    # Liquid Gooey particles and transition enhancer (0px height invisible iframe)
+    render_gooey_nav_enhancer()
+
     return st.session_state.current_page
+
+
+def render_gooey_nav_enhancer() -> None:
+    """Inject React Bits Gooey Nav liquid particle transition enhancer into the Streamlit app."""
+    gooey_script = """<!DOCTYPE html>
+<html>
+<head><style>body { margin: 0; padding: 0; overflow: hidden; background: transparent; }</style></head>
+<body>
+<script>
+(function() {
+    try {
+        const parentDoc = window.parent ? window.parent.document : document;
+
+        // Ensure SVG filter exists
+        if (!parentDoc.getElementById('cs-gooey-filter-svg')) {
+            const svg = parentDoc.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.id = 'cs-gooey-filter-svg';
+            svg.style.position = 'absolute';
+            svg.style.width = '0';
+            svg.style.height = '0';
+            svg.style.pointerEvents = 'none';
+            svg.setAttribute('aria-hidden', 'true');
+            svg.innerHTML = '<defs><filter id="cs-gooey-filter" x="-20%" y="-20%" width="140%" height="140%">' +
+                '<feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />' +
+                '<feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 16 -6" result="goo" />' +
+                '<feComposite in="SourceGraphic" in2="goo" operator="atop" />' +
+                '</filter></defs>';
+            parentDoc.body.appendChild(svg);
+        }
+
+        function initGooeyParticles() {
+            const navBar = parentDoc.querySelector('div[data-testid="stHorizontalBlock"]:has(button[key*="cs_nav_btn_"])');
+            if (!navBar) return;
+
+            let particlesLayer = navBar.querySelector('.cs-gooey-liquid-layer');
+            if (!particlesLayer) {
+                particlesLayer = parentDoc.createElement('div');
+                particlesLayer.className = 'cs-gooey-liquid-layer';
+                navBar.appendChild(particlesLayer);
+            }
+
+            const activeBtn = navBar.querySelector('button[key*="cs_nav_btn_"][kind="primary"]');
+            if (!activeBtn) return;
+
+            const curPage = activeBtn.innerText.trim();
+            const prevPage = sessionStorage.getItem('cs_gooey_active_page');
+
+            if (prevPage && prevPage !== curPage) {
+                const allBtns = Array.from(navBar.querySelectorAll('button[key*="cs_nav_btn_"]'));
+                let prevBtn = null;
+                for (let i = 0; i < allBtns.length; i++) {
+                    if (allBtns[i].innerText.trim() === prevPage) {
+                        prevBtn = allBtns[i];
+                        break;
+                    }
+                }
+
+                if (prevBtn) {
+                    spawnGooeyParticles(particlesLayer, prevBtn, activeBtn, navBar);
+                }
+            }
+
+            sessionStorage.setItem('cs_gooey_active_page', curPage);
+
+            function spawnGooeyParticles(container, fromEl, toEl, parentEl) {
+                const parentRect = parentEl.getBoundingClientRect();
+                const fromRect = fromEl.getBoundingClientRect();
+                const toRect = toEl.getBoundingClientRect();
+
+                const fromCenterX = fromRect.left - parentRect.left + fromRect.width / 2;
+                const fromCenterY = fromRect.top - parentRect.top + fromRect.height / 2;
+                const toCenterX = toRect.left - parentRect.left + toRect.width / 2;
+                const toCenterY = toRect.top - parentRect.top + toRect.height / 2;
+
+                const dx = toCenterX - fromCenterX;
+                const dy = toCenterY - fromCenterY;
+                const particleCount = 10;
+                const duration = 440;
+
+                for (let i = 0; i < particleCount; i++) {
+                    const bubble = parentDoc.createElement('div');
+                    bubble.className = 'cs-gooey-bubble';
+
+                    const size = Math.floor(Math.random() * 5 + 4);
+                    bubble.style.width = (size * 2) + 'px';
+                    bubble.style.height = (size * 2) + 'px';
+
+                    const startX = fromCenterX + (Math.random() - 0.5) * (fromRect.width * 0.4) - size;
+                    const startY = fromCenterY + (Math.random() - 0.5) * 8 - size;
+
+                    const progress = 0.3 + Math.random() * 0.7;
+                    const spreadY = (Math.random() - 0.5) * 18;
+                    const endX = fromCenterX + dx * progress + (Math.random() - 0.5) * 10 - size;
+                    const endY = fromCenterY + dy * progress + spreadY - size;
+
+                    bubble.style.transform = 'translate3d(' + startX + 'px, ' + startY + 'px, 0) scale(1)';
+                    bubble.style.opacity = '0.92';
+                    container.appendChild(bubble);
+
+                    const startTime = performance.now();
+                    const delay = Math.random() * 40;
+
+                    function animateBubble(now) {
+                        const elapsed = now - startTime - delay;
+                        if (elapsed < 0) {
+                            requestAnimationFrame(animateBubble);
+                            return;
+                        }
+                        const t = Math.min(1, elapsed / duration);
+                        const ease = 1 - Math.pow(1 - t, 3);
+
+                        const curX = startX + (endX - startX) * ease;
+                        const curY = startY + (endY - startY) * ease;
+                        const scale = 1 - t * 0.85;
+                        const alpha = 1 - t * 0.95;
+
+                        bubble.style.transform = 'translate3d(' + curX + 'px, ' + curY + 'px, 0) scale(' + scale + ')';
+                        bubble.style.opacity = alpha;
+
+                        if (t < 1) {
+                            requestAnimationFrame(animateBubble);
+                        } else {
+                            bubble.remove();
+                        }
+                    }
+                    requestAnimationFrame(animateBubble);
+                }
+            }
+        }
+
+        setTimeout(initGooeyParticles, 30);
+    } catch(e) {}
+})();
+</script>
+</body>
+</html>
+"""
+    st_components.html(gooey_script, height=0)
+
 
 
 def render_page_hero(
@@ -344,6 +503,21 @@ def render_pixel_snow_background(active: bool = True) -> None:
                 const interactionRadius = 195;
                 const interactionRadiusSq = interactionRadius * interactionRadius;
 
+                // Query image elements on page to guarantee snow NEVER renders over images
+                const imgEls = parentDoc.querySelectorAll('div[data-testid="stImage"], .stImage img, .stImage');
+                const imgBoxes = [];
+                for (let k = 0; k < imgEls.length; k++) {
+                    const rect = imgEls[k].getBoundingClientRect();
+                    if (rect.width > 20 && rect.height > 20) {
+                        imgBoxes.push({
+                            left: rect.left - 2,
+                            top: rect.top - 2,
+                            right: rect.right + 2,
+                            bottom: rect.bottom + 2
+                        });
+                    }
+                }
+
                 for (let i = 0; i < particles.length; i++) {
                     const p = particles[i];
 
@@ -386,6 +560,17 @@ def render_pixel_snow_background(active: bool = True) -> None:
                     } else if (p.x < -10) {
                         p.x = width + 10;
                     }
+
+                    // Strict exclusion: skip rendering if particle is within any image area
+                    let isOverImage = false;
+                    for (let k = 0; k < imgBoxes.length; k++) {
+                        const box = imgBoxes[k];
+                        if (p.x >= box.left && p.x <= box.right && p.y >= box.top && p.y <= box.bottom) {
+                            isOverImage = true;
+                            break;
+                        }
+                    }
+                    if (isOverImage) continue;
 
                     // Render crisp square pixel particle
                     const currentAlpha = Math.min(0.88, Math.max(0.08, p.baseAlpha + Math.abs(p.vx + p.vy) * 0.12));

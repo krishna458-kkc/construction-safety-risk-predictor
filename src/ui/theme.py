@@ -173,52 +173,7 @@ def get_mercury_css() -> str:
         display: inline-block;
     }}
 
-    /* Top Navigation Pill Bar */
-    .cs-nav-wrapper {{
-        background: var(--surface);
-        border: 1px solid var(--border-light);
-        border-radius: 36px;
-        padding: 0.35rem 0.45rem;
-        margin-bottom: 2rem;
-    }}
-
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-marker)
-        div[data-testid="stHorizontalBlock"] {{
-        gap: 0.35rem !important;
-    }}
-
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-marker)
-        div[data-testid="stHorizontalBlock"] button[kind="secondary"] {{
-        background: transparent !important;
-        border: none !important;
-        color: var(--text-secondary) !important;
-        font-weight: 500 !important;
-        font-size: 0.82rem !important;
-        padding: 0.55rem 0.65rem !important;
-        border-radius: 24px !important;
-        transition: all 0.15s ease !important;
-        box-shadow: none !important;
-        white-space: nowrap !important;
-    }}
-
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-marker)
-        div[data-testid="stHorizontalBlock"] button[kind="secondary"]:hover {{
-        background: var(--surface-interactive) !important;
-        color: var(--text-primary) !important;
-    }}
-
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(.nav-marker)
-        div[data-testid="stHorizontalBlock"] button[kind="primary"] {{
-        background: var(--accent) !important;
-        border: 1px solid var(--accent) !important;
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 0.82rem !important;
-        padding: 0.55rem 0.65rem !important;
-        border-radius: 24px !important;
-        box-shadow: none !important;
-        white-space: nowrap !important;
-    }}
+    /* Section Headings */
 
     /* Page Hero / Section Titles */
     .cs-page-hero {{
@@ -571,23 +526,100 @@ def get_mercury_css() -> str:
         border-color: var(--border-structural) !important;
     }}
 
-    /* Streamlit Segmented Control / Radio Buttons */
-    div[data-testid="stRadio"] > div {{
-        background-color: var(--surface);
-        border: 1px solid var(--border-light);
-        border-radius: 28px;
-        padding: 0.25rem;
-        gap: 0.35rem;
+    /* ==========================================================================
+       COMPACT SEGMENTED PERSPECTIVE CONTROLS (Overview, Analytics, Records)
+       ========================================================================== */
+
+    div[data-testid="stRadio"] {{
+        margin: 0.1rem 0 1.25rem 0 !important;
+    }}
+
+    div[data-testid="stRadio"] > label {{
+        display: none !important;
+    }}
+
+    div[data-testid="stRadio"] > div[role="radiogroup"] {{
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        background: rgba(22, 22, 33, 0.75) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        border: 1px solid rgba(112, 112, 125, 0.20) !important;
+        border-radius: 8px !important;
+        padding: 3px !important;
+        gap: 3px !important;
+        width: fit-content !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22) !important;
     }}
 
     div[data-testid="stRadio"] label {{
-        border-radius: 20px !important;
-        padding: 0.4rem 0.9rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        border: 1px solid transparent !important;
+        border-radius: 6px !important;
+        padding: 0.32rem 0.85rem !important;
         margin: 0 !important;
-        font-size: 0.82rem !important;
+        cursor: pointer !important;
+        font-size: 0.80rem !important;
         font-weight: 500 !important;
-        color: var(--text-secondary) !important;
-        transition: all 0.15s ease;
+        letter-spacing: 0.01em !important;
+        color: #9d9dae !important;
+        transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        user-select: none !important;
+        box-shadow: none !important;
+    }}
+
+    /* Hide standard circular radio dot */
+    div[data-testid="stRadio"] label > div:first-child {{
+        display: none !important;
+    }}
+
+    div[data-testid="stRadio"] label p,
+    div[data-testid="stRadio"] label span {{
+        color: inherit !important;
+        font-size: 0.80rem !important;
+        font-weight: inherit !important;
+        margin: 0 !important;
+        line-height: 1.3 !important;
+    }}
+
+    /* Inactive segmented item hover */
+    div[data-testid="stRadio"] label:not(:has(input:checked)):hover {{
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 255, 255, 0.09) !important;
+        color: #ededf3 !important;
+        transform: translateY(-1px) !important;
+    }}
+
+    /* Active segmented item */
+    div[data-testid="stRadio"] label:has(input:checked) {{
+        background: rgba(82, 102, 235, 0.16) !important;
+        background-color: rgba(82, 102, 235, 0.16) !important;
+        border: 1px solid rgba(82, 102, 235, 0.45) !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+        transform: none !important;
+    }}
+
+    div[data-testid="stRadio"] label:has(input:checked):hover {{
+        background: rgba(82, 102, 235, 0.22) !important;
+        border-color: rgba(82, 102, 235, 0.60) !important;
+        color: #ffffff !important;
+    }}
+
+    /* Red indicator for Site Safety & Site Analytics */
+    div[data-testid="stRadio"] label:has(input[value="Site Safety"]) p::before,
+    div[data-testid="stRadio"] label:has(input[value="Site Analytics"]) p::before {{
+        content: "●";
+        color: #ef4444;
+        font-size: 0.65rem;
+        margin-right: 0.45rem;
+        vertical-align: middle;
+        display: inline-block;
     }}
 
     /* Dataframe Styling */
@@ -612,6 +644,23 @@ def get_mercury_css() -> str:
         font-size: 0.88rem !important;
     }}
 
+    /* Clean image container isolation so Pixel Snow never renders over images */
+    div[data-testid="stImage"],
+    .stImage,
+    div[data-testid="stImage"] img,
+    .stImage img {{
+        position: relative !important;
+        z-index: 10 !important;
+        border-radius: 12px !important;
+    }}
+
+    div[data-testid="stImage"] {{
+        background-color: var(--surface) !important;
+        border: 1px solid var(--border-light) !important;
+        overflow: hidden !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+    }}
+
     /* Footer */
     .cs-footer {{
         margin-top: 3.5rem;
@@ -631,86 +680,118 @@ def get_mercury_css() -> str:
     }}
 
     /* ==========================================================================
-       COMMAND CENTER FLOATING NAVIGATION SYSTEM
+       REACT BITS GOOEY NAV COMMAND CENTER STYLING
        ========================================================================== */
 
-    /* Container wrapper for Command Center navigation */
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(.cs-command-nav-anchor),
-    div[data-testid="stVerticalBlock"]:has(> div > div > .cs-command-nav-anchor) > div:nth-child(2),
+    /* Container wrapper for Gooey Nav navigation dock */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.cs-gooey-nav-anchor),
+    div[data-testid="stVerticalBlock"]:has(> div > div > .cs-gooey-nav-anchor) > div:nth-child(2),
     div[data-testid="stHorizontalBlock"]:has(button[key*="cs_nav_btn_"]) {{
-        background: rgba(22, 22, 33, 0.94) !important;
+        background: rgba(22, 22, 33, 0.92) !important;
         backdrop-filter: blur(20px) !important;
         -webkit-backdrop-filter: blur(20px) !important;
         border: 1px solid rgba(112, 112, 125, 0.25) !important;
-        border-radius: 14px !important;
-        padding: 0.28rem 0.35rem !important;
+        border-radius: 12px !important;
+        padding: 4px 6px !important;
         margin-top: -0.6rem !important;
-        margin-bottom: 1.75rem !important;
-        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.52), 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+        margin-bottom: 1.5rem !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.25) !important;
         position: sticky !important;
         top: 0.65rem !important;
         z-index: 999 !important;
+        gap: 0.25rem !important;
+        align-items: center !important;
+        overflow: visible !important;
     }}
 
-    div[data-testid="stHorizontalBlock"]:has(button[key*="cs_nav_btn_"]) {{
-        gap: 0.2rem !important;
+    /* Remove extra margin/padding on column wrappers inside nav */
+    div[data-testid="stHorizontalBlock"]:has(button[key*="cs_nav_btn_"]) > div {{
+        padding: 0 !important;
+        min-width: 0 !important;
     }}
 
-    /* Command Center Buttons: Unified Common Properties */
+    /* Gooey Nav Buttons: Unified Base Properties */
     button[key*="cs_nav_btn_"] {{
         white-space: nowrap !important;
         font-size: 0.81rem !important;
+        font-weight: 500 !important;
         letter-spacing: 0.01em !important;
-        padding: 0.46rem 0.22rem !important;
+        padding: 0.44rem 0.55rem !important;
         text-overflow: ellipsis !important;
+        border-radius: 8px !important;
+        border: 1px solid transparent !important;
+        cursor: pointer !important;
+        user-select: none !important;
+        position: relative !important;
+        z-index: 2 !important;
+        transition: all 0.22s cubic-bezier(0.34, 1.35, 0.64, 1) !important;
     }}
 
-    /* Command Center Buttons: Inactive Item */
+    /* Inactive Nav Items */
     button[key*="cs_nav_btn_"][kind="secondary"] {{
         background: transparent !important;
         background-color: transparent !important;
         border: 1px solid transparent !important;
-        border-radius: 9px !important;
         color: #9d9dae !important;
         font-weight: 500 !important;
         box-shadow: none !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }}
 
     button[key*="cs_nav_btn_"][kind="secondary"]:hover {{
-        background: rgba(255, 255, 255, 0.06) !important;
-        background-color: rgba(255, 255, 255, 0.06) !important;
-        border-color: rgba(255, 255, 255, 0.12) !important;
+        background: rgba(255, 255, 255, 0.07) !important;
+        background-color: rgba(255, 255, 255, 0.07) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
         color: #ededf3 !important;
         transform: translateY(-1px) !important;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
     }}
 
-    /* Command Center Buttons: Active Item */
+    /* Active Nav Item - Gooey Electric Liquid Pill */
     button[key*="cs_nav_btn_"][kind="primary"] {{
-        background: rgba(82, 102, 235, 0.22) !important;
-        background-color: rgba(82, 102, 235, 0.22) !important;
-        border: 1px solid rgba(82, 102, 235, 0.75) !important;
-        border-radius: 9px !important;
+        background: #5266eb !important;
+        background-color: #5266eb !important;
+        border: 1px solid rgba(165, 180, 252, 0.4) !important;
         color: #ffffff !important;
         font-weight: 600 !important;
-        box-shadow: 0 0 14px rgba(82, 102, 235, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -2px 0 rgba(82, 102, 235, 0.85) !important;
+        box-shadow: 0 0 16px rgba(82, 102, 235, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3) !important;
         transform: none !important;
     }}
 
     button[key*="cs_nav_btn_"][kind="primary"]:hover {{
-        background: rgba(82, 102, 235, 0.30) !important;
-        background-color: rgba(82, 102, 235, 0.30) !important;
-        border-color: rgba(82, 102, 235, 0.95) !important;
+        background: #5d70f0 !important;
+        background-color: #5d70f0 !important;
+        border-color: rgba(199, 210, 254, 0.55) !important;
         color: #ffffff !important;
-        box-shadow: 0 0 18px rgba(82, 102, 235, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -2px 0 rgba(82, 102, 235, 0.95) !important;
+        box-shadow: 0 0 20px rgba(82, 102, 235, 0.68), 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+    }}
+
+    /* Liquid particles overlay for gooey effect */
+    .cs-gooey-liquid-layer {{
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        pointer-events: none !important;
+        z-index: 1 !important;
+        filter: url('#cs-gooey-filter') !important;
+        -webkit-filter: url('#cs-gooey-filter') !important;
+    }}
+
+    .cs-gooey-bubble {{
+        position: absolute !important;
+        background: #6375f1 !important;
+        border-radius: 50% !important;
+        pointer-events: none !important;
+        will-change: transform, opacity !important;
+        box-shadow: 0 0 8px rgba(99, 117, 241, 0.6) !important;
     }}
 
     /* Responsive adjustments */
     @media (max-width: 1100px) {{
         button[key*="cs_nav_btn_"] {{
             font-size: 0.74rem !important;
-            padding: 0.40rem 0.15rem !important;
+            padding: 0.38rem 0.25rem !important;
         }}
     }}
 
